@@ -1,0 +1,1169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Ashcroft T4/T7 Temperature Switch Configurator</title>
+<meta name="description" content="Step-by-step configurator for Ashcroft T4 (NEMA 4X) and T7 (NEMA 7/9) temperature switches. Demo.">
+<style>
+:root{
+  /* Ashcroft brand tokens (taken from ashcroft.com theme CSS) */
+  --brand:#0057b8;        /* primary blue */
+  --brand-dark:#004695;   /* footer / nav blue */
+  --brand-mid:#005da6;
+  --sky:#009fdf;          /* focus ring */
+  --accent:#e35205;       /* orange accent */
+  --accent-ink:#8a3204;
+  --text:#4d4d4d;
+  --text-strong:#1a1a1a;
+  --muted:#5e5e5e;
+  --line:#d0d0ce;
+  --soft:#f1f4f9;
+  --good:#009639;
+  --good-ink:#0b4d22;
+  --font-display:Roboto,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --font-body:"Open Sans","Segoe UI",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:12px}
+body{margin:0;background:#fff;color:var(--text);font:16px/1.55 var(--font-body)}
+h1,h2,h3,h4{font-family:var(--font-display);color:var(--brand);margin:0;line-height:1.25}
+p{margin:0 0 .75em}
+a{color:var(--brand)}
+img{max-width:100%}
+:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.skip{position:absolute;left:-999px;top:0;background:#fff;padding:10px 14px;z-index:100}
+.skip:focus{left:8px;top:8px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 16px}
+
+/* header + hero */
+.site-header{border-bottom:1px solid var(--line);background:#fff}
+.site-header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:68px}
+.site-header img{height:40px;width:auto;display:block}
+.site-header .tag{font:500 14px var(--font-display);color:var(--muted);text-align:right}
+.hero{background:linear-gradient(120deg,var(--brand) 0%,var(--brand-dark) 100%);color:#fff;border-bottom:4px solid var(--accent)}
+.hero .wrap{padding-top:28px;padding-bottom:30px}
+.hero h1{color:#fff;font-weight:500;font-size:32px;max-width:26ch}
+.hero p{margin:10px 0 0;font-size:17px;max-width:60ch;color:#eaf2fb}
+
+/* stepper */
+.stepper{margin:20px 0 18px}
+.stepper ol{list-style:none;margin:0;padding:0;display:flex;gap:6px}
+.stepper li{flex:1;min-width:0}
+.step-btn{all:unset;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:6px 2px;cursor:pointer;text-align:center;border-radius:8px;min-height:44px}
+.step-btn:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.step-btn[disabled]{cursor:default}
+.step-btn .dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:700 15px var(--font-display);border:2px solid var(--line);color:var(--muted);background:#fff}
+.step-btn .lbl{font:500 13px/1.2 var(--font-display);color:var(--muted)}
+.step-btn.done .dot{background:var(--brand);border-color:var(--brand);color:#fff}
+.step-btn.done .lbl{color:var(--brand)}
+.step-btn[aria-current="step"] .dot{background:var(--accent);border-color:var(--accent);color:#fff}
+.step-btn[aria-current="step"] .lbl{color:var(--text-strong);font-weight:700}
+.progress{height:6px;background:var(--soft);border-radius:6px;margin-top:10px;overflow:hidden}
+.progress span{display:block;height:100%;background:var(--brand);border-radius:6px;transition:width .25s}
+.step-now{display:none;font:600 15px var(--font-display);color:var(--text-strong);margin-top:8px}
+
+/* layout */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start;padding-bottom:40px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px 24px 8px}
+.panel h2{font-size:26px;font-weight:700}
+.lead{color:var(--muted);font-size:17px;margin:6px 0 20px}
+.q{margin:0 0 26px;border:0;padding:0;min-width:0}
+.q>legend,.q>.qh{font:700 17px/1.3 var(--font-display);color:var(--text-strong);padding:0;margin:0 0 4px;display:block}
+.q .qsub{color:var(--muted);font-size:15px;margin:0 0 10px}
+.cards{display:grid;gap:10px}
+.cards.two{grid-template-columns:1fr 1fr}
+.cards.three{grid-template-columns:repeat(3,1fr)}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:2px solid var(--line);border-radius:var(--radius);background:#fff;cursor:pointer;min-height:56px;position:relative}
+.opt:hover{border-color:#9db9dd}
+.opt input{flex:none;width:22px;height:22px;margin:2px 0 0;accent-color:var(--brand)}
+.opt.is-on{border-color:var(--brand);background:var(--soft)}
+.opt:has(input:focus-visible){outline:3px solid var(--sky);outline-offset:2px}
+.opt.is-off{opacity:.55;cursor:not-allowed}
+.opt-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.opt-title{font:600 16px/1.35 var(--font-display);color:var(--text-strong);overflow-wrap:anywhere}
+.opt-desc{font-size:15px;color:var(--text);overflow-wrap:anywhere}
+.opt-note{font-size:14px;color:var(--muted);overflow-wrap:anywhere}
+.badge{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:99px;font:700 12px/1.5 var(--font-display);background:var(--accent);color:#fff;vertical-align:1px;white-space:nowrap}
+.badge.soft{background:var(--soft);color:var(--brand);border:1px solid #b9cbe6}
+.fit{font-size:14px;font-weight:600}
+.fit.ok{color:var(--good-ink)}.fit.no{color:var(--accent-ink)}
+.pills{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pills .opt{padding:10px 12px;min-height:48px;align-items:center}
+.pills .opt-title{font-weight:500;font-size:15px}
+.group-h{font:700 14px var(--font-display);letter-spacing:.04em;text-transform:uppercase;color:var(--brand);margin:18px 0 8px}
+
+/* fields */
+.field{margin:0 0 14px}
+.field label{display:block;font:600 15px var(--font-display);color:var(--text-strong);margin-bottom:4px}
+.field .hint{display:block;font-weight:400;color:var(--muted);font-size:14px;margin-top:2px}
+input[type=text],input[type=number],input[type=email],input[type=tel],textarea,select{width:100%;font:16px var(--font-body);color:var(--text-strong);padding:11px 12px;border:2px solid var(--line);border-radius:8px;background:#fff;min-height:48px}
+textarea{min-height:96px;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:var(--brand);outline:3px solid var(--sky);outline-offset:1px}
+.field.err input,.field.err textarea{border-color:var(--accent)}
+.errmsg{color:var(--accent-ink);font-size:14px;font-weight:600;margin-top:4px}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.unit{display:inline-flex;border:2px solid var(--brand);border-radius:8px;overflow:hidden;margin:0 0 16px}
+.unit label{display:block;position:relative;min-width:64px;text-align:center}
+.unit input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.unit span{display:block;padding:11px 18px;font:600 16px var(--font-display);color:var(--brand);min-height:44px}
+.unit input:checked+span{background:var(--brand);color:#fff}
+.unit input:focus-visible+span{outline:3px solid var(--sky);outline-offset:-3px}
+
+/* help + feedback */
+details.help{margin:0 0 22px;border:1px dashed #9db9dd;border-radius:var(--radius);background:#f8fbff}
+details.help summary{cursor:pointer;padding:12px 16px;font:600 15px var(--font-display);color:var(--brand);min-height:44px;display:flex;align-items:center}
+details.help .in{padding:0 16px 12px;font-size:15px}
+details.help ul{margin:0 0 .6em;padding-left:1.2em}
+.fb{display:grid;gap:8px;margin:0 0 20px}
+.msg{display:flex;gap:10px;padding:12px 14px;border-radius:8px;border-left:5px solid;font-size:15px;overflow-wrap:anywhere}
+.msg strong{font-family:var(--font-display);white-space:nowrap}
+.msg-good{background:#eef8f1;border-color:var(--good);color:var(--good-ink)}
+.msg-warn{background:#fff4ec;border-color:var(--accent);color:var(--accent-ink)}
+.msg-info,.msg-note{background:#eaf2fb;border-color:var(--brand);color:#0b3a73}
+.notice{background:#fffbea;border:1px solid #e6cf6b;color:#5b4a00;padding:12px 14px;border-radius:8px;margin:0 0 18px;font-size:15px}
+
+/* summary */
+.summary{position:sticky;top:12px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden;max-height:calc(100vh - 24px);overflow-y:auto}
+.summary .ph{background:var(--soft);padding:14px;text-align:center;border-bottom:1px solid var(--line)}
+.summary .ph .imgs{display:flex;justify-content:center;gap:12px;align-items:flex-end}
+.summary .ph img{height:170px;width:auto;object-fit:contain;mix-blend-mode:multiply}
+.summary .ph.two img{height:120px}
+.summary .ph small{display:block;color:var(--muted);font-size:12.5px;margin-top:6px}
+.summary .sb{padding:14px 16px 16px}
+.summary h3{font-size:18px;color:var(--text-strong)}
+.summary .sub{color:var(--muted);font-size:14px;margin:2px 0 10px}
+.summary dl{margin:0;display:grid;gap:8px}
+.summary dt{font:600 12.5px var(--font-display);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.summary dd{margin:0;font-size:15px;color:var(--text-strong);overflow-wrap:anywhere}
+.summary .empty{color:var(--muted);font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{border:1px solid #b9cbe6;background:#fff;border-radius:6px;padding:3px 8px;font:600 13px var(--font-display);color:var(--brand)}
+.chip small{color:var(--muted);font-weight:500}
+.ptcount{margin-top:12px;font-size:14px;color:var(--accent-ink);font-weight:600}
+
+/* action bar */
+.actionbar{position:sticky;bottom:0;z-index:20;background:#fff;border:1px solid var(--line);border-radius:var(--radius);margin-top:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 -6px 16px rgba(0,0,0,.06)}
+.actionbar .hint{flex:1;font-size:14px;color:var(--muted);min-width:0}
+.btn{font:600 16px var(--font-display);min-height:48px;padding:0 22px;border-radius:8px;border:2px solid transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-secondary{background:#fff;color:var(--brand);border-color:var(--brand)}
+.btn-secondary:hover{background:var(--soft)}
+.btn-accent{background:var(--accent);color:#fff;font-size:19px;font-weight:700}
+.btn-accent:hover{background:#c74704}
+.btn[disabled]{background:#e4e9f1;color:#6b6b6b;border-color:#e4e9f1;cursor:not-allowed}
+.link{all:unset;color:var(--brand);text-decoration:underline;cursor:pointer;font-weight:600;font-size:14px;padding:6px 4px;min-height:32px;box-sizing:border-box}
+.link:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+
+/* review */
+.rv{width:100%;border-collapse:collapse;margin:0 0 22px;font-size:15px}
+.rv th,.rv td{text-align:left;vertical-align:top;padding:10px 8px;border-bottom:1px solid var(--line)}
+.rv th{width:34%;font:600 14px var(--font-display);color:var(--muted)}
+.rv td:last-child{text-align:right;width:1%;white-space:nowrap}
+.rv td{color:var(--text-strong);overflow-wrap:anywhere}
+.points{margin:0 0 22px;padding:14px 16px;border:2px solid var(--accent);border-radius:var(--radius);background:#fff8f3}
+.points h3{color:var(--accent-ink);font-size:17px;margin-bottom:6px}
+.points ul{margin:0;padding-left:1.2em;font-size:15px}
+.code-parts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 24px}
+.small{font-size:14px;color:var(--muted)}
+
+/* footer */
+footer.site{background:var(--brand-dark);color:#dbe6f5;padding:32px 0 36px;font-size:14.5px}
+footer.site a{color:#fff}
+footer.site .cols{display:grid;grid-template-columns:1.2fr 1fr;gap:24px}
+footer.site h4{color:#fff;font-size:15px;margin-bottom:6px}
+footer.site p{margin:0 0 8px}
+footer.site .credit{border-top:1px solid rgba(255,255,255,.25);margin-top:20px;padding-top:16px}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:200;background:rgba(0,30,70,.55);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px}
+.modal.open{display:flex}
+.dialog{background:#fff;border-radius:12px;max-width:600px;width:100%;padding:22px 22px 24px;position:relative;margin:auto 0}
+.dialog h2{font-size:24px;padding-right:44px}
+.dialog .x{position:absolute;top:10px;right:10px;width:44px;height:44px;border:0;background:transparent;font-size:28px;line-height:1;cursor:pointer;color:var(--muted);border-radius:8px}
+.dialog .x:hover{background:var(--soft)}
+.dialog .btnrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.dialog .btnrow .btn{flex:1 1 200px}
+.copybox{width:100%;min-height:120px;font:16px/1.4 ui-monospace,Menlo,Consolas,monospace;margin-top:10px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--text-strong);color:#fff;padding:10px 16px;border-radius:8px;z-index:300;font-size:15px;max-width:calc(100vw - 32px)}
+.toast[hidden]{display:none}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .summary{position:static;max-height:none}
+  .actionbar{position:fixed;left:0;right:0;bottom:0;margin:0;border-radius:0;border-width:1px 0 0 0;padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  .hero h1{font-size:26px}
+  .hero .wrap{padding-top:20px;padding-bottom:22px}
+  .hero p{font-size:15.5px;margin-top:8px}
+  .stepper .lbl{display:none}
+  .step-btn[aria-current="step"] .lbl{display:none}
+  .step-now{display:block}
+  .step-btn .dot{width:30px;height:30px;font-size:14px}
+  .panel{padding:18px 16px 4px;border-radius:12px}
+  .panel h2{font-size:23px}
+  .toast{bottom:100px}
+  footer.site .cols{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .site-header .tag{display:none}
+  .cards.two,.cards.three,.input-row,.actions{grid-template-columns:1fr}
+  .pills{grid-template-columns:1fr 1fr}
+  .actionbar .hint{display:none}
+  .actionbar .btn{flex:1}
+  .actionbar.rv-bar .hint{display:block}
+  .rv,.rv tbody,.rv tr,.rv th,.rv td{display:block;width:auto}
+  .rv tr{border-bottom:1px solid var(--line);padding:10px 0}
+  .rv th,.rv td{border:0;padding:0}
+  .rv th{width:auto;margin-bottom:2px}
+  .rv td:last-child{text-align:left;width:auto;padding-top:4px}
+  .badge{margin-left:0;margin-top:2px}
+  .opt-title{display:flex;flex-direction:column;align-items:flex-start}
+}
+@media (max-width:360px){
+  .wrap{padding:0 14px}
+  .hero h1{font-size:23px}
+  .stepper ol{gap:2px}
+  .step-btn .dot{width:28px;height:28px}
+  .pills{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the configurator</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a href="https://www.ashcroft.com/" target="_blank" rel="noopener" aria-label="Ashcroft home page (opens in a new tab)"><img src="__LOGO__" alt="Ashcroft - Trust the shield" width="522" height="123"></a>
+    <span class="tag">Temperature Switches &middot; T4 / T7 Series</span>
+  </div>
+</header>
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap">
+    <h1 id="hero-title">Find the right temperature switch in a few easy steps</h1>
+    <p>Answer simple questions about where and how you will use it. No engineering jargon needed. You will get a spec sheet (PDF) and can ask for a quotation.</p>
+  </div>
+</section>
+
+<main id="main" class="wrap">
+  <nav class="stepper" aria-label="Configurator progress">
+    <ol id="stepper"></ol>
+    <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+    <div class="step-now" id="stepNow" aria-hidden="true"></div>
+  </nav>
+
+  <div class="layout">
+    <div>
+      <section class="panel" id="panel" aria-live="off"></section>
+<div class="actionbar" id="actionbar" role="group" aria-label="Step navigation">
+  <button type="button" class="btn btn-secondary" id="btnBack">Back</button>
+  <span class="hint" id="btnHint"></span>
+  <button type="button" class="btn btn-primary" id="btnNext">Continue</button>
+</div>
+    </div>
+    <aside class="summary" id="summary" aria-label="Your selection so far"></aside>
+  </div>
+</main>
+
+
+<footer class="site">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h4>Ashcroft Inc.</h4>
+        <p>250 East Main Street<br>Stratford, CT 06614-5145, U.S.A.<br>1.800.328.8258 &middot; <a href="https://www.ashcroft.com/" target="_blank" rel="noopener">ashcroft.com</a></p>
+      </div>
+      <div>
+        <h4>Original product information</h4>
+        <p><a href="https://www.ashcroft.com/products/temperature/temperature-switches/t4-temperature-switch/" target="_blank" rel="noopener">T4 NEMA 4X product page</a><br>
+        <a href="https://www.ashcroft.com/products/temperature/temperature-switches/t7-9-temperature-switch/" target="_blank" rel="noopener">T7 NEMA 7/9 product page</a><br>
+        <a href="https://www.ashcroft.com/wp-content/uploads/2020/10/datasheet-nema-t4-t7-temperature-switches.pdf" target="_blank" rel="noopener">Data sheet (PDF, Rev I, 10-18-23)</a></p>
+      </div>
+    </div>
+    <div class="credit">
+      <p>This is a demo created by <a href="https://www.swiftyquote.com" target="_blank" rel="noopener">www.swiftyquote.com</a> | <a href="mailto:sales@swiftyquote.com">sales@swiftyquote.com</a></p>
+      <p>All data and photos are the property of Ashcroft Inc. and were used for demo purposes only. Ashcroft&reg; and Trust the Shield&reg; are trademarks of Ashcroft Inc.</p>
+    </div>
+  </div>
+</footer>
+
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="mTitle" id="dialog"></div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>/*__JSPDF__*/</script>
+<script>
+/* =====================================================================
+   SETTINGS - change these values to re-point the configurator
+   ===================================================================== */
+var SETTINGS = {
+  QUOTE_TO: 'info@ashcroft.com',         // recipient of the quotation request (World HQ address on ashcroft.com/contact)
+  QUOTE_CC: 'sales@swiftyquote.com',     // ALWAYS copied on every quotation request (tracking)
+  TRACKING_TAG: 'swiftyquote.com',       // ALWAYS included in the email subject (tracking)
+  QUOTE_ENDPOINT: '',                    // optional form-service URL (POST JSON). When set it replaces the mailto: link
+  COMPANY: 'Ashcroft Inc.',
+  ADDRESS: '250 East Main Street, Stratford, CT 06614-5145, U.S.A.',
+  PHONE: '1.800.328.8258',
+  WEBSITE: 'ashcroft.com',
+  DATASHEET_REV: 'Data sheet t4-t7_switch_ds_RevI_10-18-23',
+  REF_PREFIX: 'CFG'
+};
+/* ===================================================================== */
+
+(function(){
+'use strict';
+
+var IMG = { logo:'__LOGO__', t4:'__T4__', t7:'__T7__' };
+
+/* ------------------------- helpers ------------------------- */
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function num(t){ if(t===null||t===undefined) return NaN; var s=String(t).trim().replace(',','.'); if(s===''||!/^-?\d*\.?\d+$/.test(s)) return NaN; return parseFloat(s); }
+function r1(x){return Math.round(x*10)/10;}
+function F2C(f){return (f-32)*5/9;} function C2F(c){return c*9/5+32;}
+function fmtF(f){ return Math.round(f)+' °F ('+Math.round(F2C(f))+' °C)'; }
+function fmtDeltaF(a,b){ var u=S.unit; if(u==='C'){ return r1(a*5/9)+' to '+r1(b*5/9)+' °C'; } return r1(a)+' to '+r1(b)+' °F'; }
+function today(){ var d=new Date(); return d.toISOString().slice(0,10); }
+function makeRef(){ var d=new Date(); var y=String(d.getFullYear()).slice(2), m=('0'+(d.getMonth()+1)).slice(-2), dd=('0'+d.getDate()).slice(-2); var a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',s=''; for(var i=0;i<4;i++) s+=a[Math.floor(Math.random()*a.length)]; return SETTINGS.REF_PREFIX+'-'+y+m+dd+'-'+s; }
+
+/* ------------------------- product data (all from the Ashcroft data sheet) ------------------------- */
+var USES = ['Offshore oil rigs','Chemical and petrochemical plants','Pulp and paper mills','Power plants','Steel mills','Water and sewage treatment plants','Pumps, compressors and turbines','Boilers and burners','Degreasers and evaporators','Recovery systems','Reverse osmosis systems and filters','Food processing','Ground support equipment','Hydraulic and lubrication systems','Heating and air conditioning','Marine equipment','Specialized OEM equipment','Other / not listed'];
+
+var APPROVALS = [
+  {v:'na',  t:'North America (UL / CSA)', d:'T7 is listed for Class I Div 1 Groups B, C and D and Class II Div 1 Groups E, F and G.'},
+  {v:'eu',  t:'Europe (ATEX / CE)',       d:'ATEX II 2GD, Ex d IIC T6 Gb, Ex tb IIIC T85 °C Db.'},
+  {v:'int', t:'International (IECEx)',    d:'IECEx: Ex d IIC T6 Gb, Ex tb IIIC T85 °C Db.'},
+  {v:'uk',  t:'United Kingdom (UKCA)',    d:'UKCA / UKEX marking is listed on the T7 series.'},
+  {v:'tbc', t:'Not sure yet',             d:'No problem. We will check which approval your site needs.'}
+];
+
+var RANGES = [
+  {f:[-40,60],  c:[-40,16],  max:400, db:[[1.0,2.0],[3.0,8.0],[1.5,5.5],[1.4,6.0],[8.0,16.0]]},
+  {f:[0,100],   c:[-20,40],  max:400, db:[[1.5,3.0],[5.0,12.0],[2.2,8.5],[1.5,7.5],[9.0,20.0]]},
+  {f:[75,205],  c:[20,95],   max:400, db:[[1.5,3.5],[8.0,16.0],[2.5,12.0],[2.0,9.0],[10.0,24.0]], example:true},
+  {f:[150,260], c:[65,125],  max:400, db:[[1.5,3.0],[5.0,12.0],[2.2,8.5],[2.0,9.0],[10.0,24.0]]},
+  {f:[235,375], c:[110,190], max:500, db:[[1.5,3.5],[5.0,12.0],[2.5,8.5],[2.0,9.0],[10.0,24.0]]},
+  {f:[350,525], c:[175,275], max:700, db:[[2.0,4.5],[8.0,16.0],[3.2,12.0],[2.5,10.0],[15.0,34.0]], noShortDirect:true},
+  {f:[500,750], c:[260,400], max:900, db:[[4.0,8.0],[16.0,30.0],[7.2,24.0],[5.0,23.0],[30.0,50.0]], remoteOnly:true}
+];
+var DBCOL = {'20':0,'26':0,'27':0,'21':1,'24':1,'50':2,'22':3,'32':4,'42':4};
+
+/* switch elements. ac / dc = amps listed on the data sheet; v480 = rated for 480 Vac; base = the single element a dual is based on */
+var EL = {
+ '20':{n:'Narrow deadband ac',spec:'15 A, 125/250 Vac',ac:15,g:'ac',dual:'61',plain:'Resets soon after the temperature moves back past the setpoint (narrow deadband).',example:true},
+ '24':{n:'General purpose',spec:'15 A, 125/250/480 Vac',ac:15,v480:1,g:'ac',dual:'64',plain:'General-purpose AC switching. This is the one to look at for 480 Vac circuits.'},
+ '23':{n:'Heavy duty ac',spec:'22 A, 125/250 Vac',ac:22,g:'ac',dual:null,plain:'For bigger AC loads (up to 22 A).'},
+ '50':{n:'Variable dead band',spec:'15 A, 125/250 Vac',ac:15,g:'ac',dual:null,plain:'The deadband (how far the temperature must fall back before the switch resets) can be adjusted within limits.'},
+ '25':{n:'Heavy duty dc',spec:'10 A, 125 Vac or dc, 1/8 HP, 125 Vac or dc',ac:10,dc:10,g:'dc',dual:null,plain:'For direct-current (DC) loads.'},
+ '31':{n:'Low level (gold) contacts',spec:'15 A, 125 Vac',ac:15,g:'low',dual:'70',plain:'Gold contacts, for very small signals such as electronic inputs.'},
+ '42':{n:'Hermetically sealed switch, gold contacts',spec:'1 A, 125 Vac',ac:1,g:'low',dual:'71',plain:'Sealed switch with gold contacts, for small signals.'},
+ '21':{n:'Ammonia service',spec:'5 A, 125/250 Vac',ac:5,g:'env',dual:'65',plain:'For ammonia service.'},
+ '22':{n:'Hermetically sealed, narrow deadband',spec:'5 A, 125/250 Vac',ac:5,g:'env',dual:'67',plain:'Sealed switch for extra reliability and safety, with a narrow deadband.'},
+ '26':{n:'Sealed environment proof',spec:'15 A, 125/250 Vac',ac:15,g:'env',dual:'62',plain:'Sealed against the environment around the switch.'},
+ '27':{n:'High temperature 300 °F',spec:'15 A, 125/250 Vac',ac:15,g:'env',dual:'63',plain:'For warm surroundings: rated for 300 °F.'},
+ '32':{n:'Hermetically sealed switch, general purpose',spec:'11 A, 125/250 Vac; 5 A, 30 Vdc',ac:11,dc:5,g:'env',dual:'68',plain:'Sealed, general-purpose switch. Handles AC and low-voltage DC.'},
+ '28':{n:'Manual reset, trip on increasing',spec:'15 A, 125/250 Vac',ac:15,g:'man',dual:null,plain:'Trips when the temperature rises to the setpoint and stays tripped until someone resets it by hand.'},
+ '29':{n:'Manual reset, trip on decreasing',spec:'15 A, 125/250 Vac',ac:15,g:'man',dual:null,plain:'Trips when the temperature falls to the setpoint and stays tripped until someone resets it by hand.'}
+};
+var DU = {
+ '61':{base:'20',n:'Dual narrow deadband',spec:'15 A, 125/250 Vac',ac:15},
+ '62':{base:'26',n:'Dual sealed environment proof',spec:'15 A, 125/250 Vac',ac:15},
+ '63':{base:'27',n:'Dual high temp. 300 °F',spec:'15 A, 125/250 Vac',ac:15},
+ '64':{base:'24',n:'Dual general purpose',spec:'15 A, 125/250/480 Vac, 1/2 A, 125 Vdc, 1/4 A, 250 Vdc',ac:15,dc:0.5,v480:1},
+ '65':{base:'21',n:'Dual ammonia service',spec:'5 A, 125/250 Vac',ac:5},
+ '67':{base:'22',n:'Dual hermetically sealed switch, narrow dead band',spec:'5 A, 125/250 Vac',ac:5},
+ '68':{base:'32',n:'Dual hermetically sealed switch, general purpose',spec:'11 A, 125/250 Vac, 5 A, 30 Vdc',ac:11,dc:5},
+ '70':{base:'31',n:'Dual low level gold contacts',spec:'1 A, 125/250 Vac',ac:1},
+ '71':{base:'42',n:'Dual hermetically sealed switch gold contacts',spec:'1 A, 125/250 Vac',ac:1}
+};
+var GROUPS = [['ac','Everyday AC switching'],['dc','Direct current (DC)'],['low','Very small signals'],['env','Sealed and special environments'],['man','Manual reset (stays tripped until reset)']];
+
+var STEMS = [
+ {v:'027',n:'2¾″',u:null},{v:'040',n:'4″',u:'2½″'},{v:'060',n:'6″',u:'4½″'},
+ {v:'090',n:'9″',u:'7½″'},{v:'120',n:'12″',u:'10½″'}
+];
+var CAPS = [{v:'T05',n:'5 ft'},{v:'T10',n:'10 ft'},{v:'T15',n:'15 ft'},{v:'T20',n:'20 ft'},{v:'T25',n:'25 ft'}];
+
+/* options from Table 1. on: enclosures where it is offered */
+var OPTS = [
+ {c:'JL',g:'wire',t:'¾″ to ½″ reducing bushing',d:'Adapts the ¾ NPT cable/conduit opening to a ½″ conduit.',on:['T4','T7']},
+ {c:'JM',g:'wire',t:'Metric conduit connection M20 x 1.5',d:'Cable/conduit entry with a metric M20 x 1.5 thread.',on:['T4','T7']},
+ {c:'JK',g:'wire',t:'Left conduit connection',d:'Cable/conduit entry on the left side.',on:['T4'],n:'Not available with two switches (DPDT) on the T4.'},
+ {c:'LE',g:'wire',t:'6 foot leads on the micro switch',d:'Wires already attached to the micro switch, 6 ft long.',on:['T4','T7']},
+ {c:'PM',g:'wire',t:'¾″ sealed conduit connection with 16″ lead wires',d:'Sealed conduit connection with 16″ lead wires fitted.',on:['T4','T7']},
+ {c:'K3',g:'wire',t:'Terminal blocks',d:'Screw terminals inside the housing to make wiring easier.',on:['T7'],n:'Data sheet note: terminal blocks are standard with 700 dual switches.'},
+ {c:'PJ',g:'ind',t:'Pilot light 24 VDC',d:'A lamp that shows the switch state (24 VDC).',on:['T4']},
+ {c:'PK',g:'ind',t:'Pilot lights',d:'Lamps that show the switch state.',on:['T4']},
+ {c:'YW',g:'house',t:'316L stainless steel housing',d:'Stainless steel housing instead of epoxy-coated aluminum.',on:['T7']},
+ {c:'CN',g:'house',t:'ATEX Directive 94/9 EC',d:'ATEX option for the T7.',on:['T7']},
+ {c:'C8',g:'house',t:'CSA approved',d:'CSA-approved version.',on:['T7'],n:'Data sheet note: standard on 400 Series.'},
+ {c:'CH',g:'house',t:'Chained cover',d:'Cover attached with a chain so it does not get lost.',on:['T4','T7']},
+ {c:'FP',g:'house',t:'Fungus proof',d:'Fungus-proof version.',on:['T4','T7']},
+ {c:'BX',g:'mount',t:'½″ male NPT bushing',d:'Seals the capillary to the thermowell (remote mount only).',on:['T4','T7'],remoteOnly:true},
+ {c:'TM',g:'mount',t:'2″ pipe mounting bracket',d:'Bracket to mount the switch housing on a 2″ pipe.',on:['T4','T7']},
+ {c:'FS',g:'setup',t:'Factory adjusted setpoint',d:'The setpoint is adjusted at the factory to your switching temperature.',on:['T4','T7']},
+ {c:'RN',g:'setup',t:'Range scale',d:'Adds a range scale.',on:['T4','T7']},
+ {c:'C4',g:'setup',t:'Traceable calibration certificate',d:'A calibration certificate that can be traced.',on:['T4','T7']}
+];
+var OGROUPS = [['wire','Wiring and cable entry'],['ind','Indicator lights'],['house','Housing and approvals'],['mount','Mounting'],['setup','Setpoint and documents']];
+var TAGS = [{v:'NH',t:'Stainless steel tag',d:'Tagging in stainless steel (the data sheet example).',ex:true},{v:'NN',t:'Paper tag',d:'Tagging on paper.'}];
+
+var STEPS = [
+ {id:'app',  name:'Application'},
+ {id:'cond', name:'Conditions'},
+ {id:'inst', name:'Installation'},
+ {id:'rng',  name:'Range'},
+ {id:'sw',   name:'Switch'},
+ {id:'opt',  name:'Options'},
+ {id:'rev',  name:'Review'}
+];
+
+/* ------------------------- state ------------------------- */
+var S = {
+  step:0, unit:'F', ref:makeRef(),
+  use:null, hazard:null, approval:null, enclosure:null,
+  spText:'', pkText:'', ambText:'', action:null,
+  mount:null, stem:null, cap:null, thermowell:false,
+  range:null,
+  poles:null, element:null, load:null, ampsText:'',
+  opts:{}, tag:null, tagText:'', visited:{0:true},
+  qty:1, notes:'',
+  notices:[], help:{}
+};
+
+/* ------------------------- derived values ------------------------- */
+function spF(){ var v=num(S.spText); return isNaN(v)?NaN:(S.unit==='F'?v:C2F(v)); }
+function pkF(){ var v=num(S.pkText); return isNaN(v)?NaN:(S.unit==='F'?v:C2F(v)); }
+function ambC(){ var v=num(S.ambText); return isNaN(v)?NaN:(S.unit==='C'?v:F2C(v)); }
+function isT7(){ return S.enclosure==='T7'; }
+function rangeLabel(r){ return r.f[0]+' to '+r.f[1]+' °F ('+r.c[0]+' to '+r.c[1]+' °C)'; }
+function rangeCode(r){ return r.f[0]+'/'+r.f[1]+'F'; }
+
+function rangeStatus(r){
+  var sp=spF(), pk=pkF(); if(isNaN(pk)) pk=sp;
+  var st={contains:false,maxOk:true,avail:true,why:[]};
+  if(!isNaN(sp)){ st.contains = sp>=r.f[0] && sp<=r.f[1]; }
+  if(!isNaN(pk)) st.maxOk = pk<=r.max;
+  if(r.remoteOnly && S.mount==='direct'){ st.avail=false; st.why.push('remote'); }
+  if(r.noShortDirect && S.mount==='direct' && (S.stem==='027'||S.stem==='040')){ st.avail=false; st.why.push('short'); }
+  return st;
+}
+function recommended(){
+  var best=-1,bestSpan=1e9,any=-1;
+  RANGES.forEach(function(r,i){ var st=rangeStatus(r); if(!st.contains) return; if(any<0) any=i; if(st.maxOk&&st.avail){ var span=r.f[1]-r.f[0]; if(span<bestSpan){bestSpan=span;best=i;} } });
+  return best>=0?best:any;
+}
+function curRangeIndex(){ if(S.range==='tbc') return recommended(); return S.range; }
+function curRange(){ var i=curRangeIndex(); return (i===null||i===undefined||i<0)?null:RANGES[i]; }
+function effCode(){ if(!S.element||S.element==='tbc') return null; return S.poles==='dual'? EL[S.element].dual : S.element; }
+function elInfo(code){ return EL[code] ? EL[code] : (DU[code]||null); }
+function baseOf(code){ return DU[code]?DU[code].base:code; }
+function deadband(code){
+  var r=curRange(); if(!r||!code) return null; var b=baseOf(code); var col=DBCOL[b]; if(col===undefined) return null;
+  var v=r.db[col], k=DU[code]?1.6:1; return [r1(v[0]*k), r1(v[1]*k)];
+}
+function optAvail(o){
+  if(!S.enclosure||o.on.indexOf(S.enclosure)<0) return false;
+  if(o.remoteOnly && S.mount!=='remote') return false;
+  if(o.c==='JK' && S.poles==='dual') return false;
+  return true;
+}
+function modelName(){
+  if(!S.enclosure) return 'T4 / T7 Series Temperature Switch';
+  return S.enclosure==='T4' ? 'T4 Series NEMA 4X Watertight Temperature Switch' : 'T7 Series NEMA 7/9 Explosion-Proof Temperature Switch';
+}
+function modelShort(){ return S.enclosure ? (S.enclosure+' temperature switch') : 'T4 / T7 temperature switch'; }
+function photoKey(){ return S.enclosure==='T7'?'t7':(S.enclosure==='T4'?'t4':null); }
+function photoCaption(){ return S.enclosure==='T7' ? 'T7 NEMA 7 & 9, remote mount shown (with optional XBX 1/2" male bushing)' : 'T4 NEMA 4X, direct mount shown'; }
+
+/* ------------------------- constraints: reset answers that no longer apply ------------------------- */
+function notice(step,text){ if(S.notices.every(function(n){return n.text!==text;})) S.notices.push({step:step,text:text}); }
+function constrain(){
+  S.enclosure = S.hazard==='safe' ? 'T4' : (S.hazard ? 'T7' : null);
+  if(!isT7()){ if(S.approval){ S.approval=null; } }
+  if(S.hazard!=='haz' && S.hazard!=='unsure') S.approval=null;
+  if(S.mount==='direct' && S.cap){ S.cap=null; }
+  if(S.mount==='remote' && S.stem){ S.stem=null; }
+  if(S.mount==='direct' && S.stem==='027' && S.thermowell){ /* kept, flagged as a point to check */ }
+  if(S.poles==='dual' && S.element && S.element!=='tbc' && !EL[S.element].dual){
+    notice(4,'Two switches (DPDT) are not offered for "'+EL[S.element].n+'", so that choice was cleared. Please pick another switch type.'); S.element=null; }
+  OPTS.forEach(function(o){ if(S.opts[o.c] && !optAvail(o)){ delete S.opts[o.c]; notice(5,'Option '+o.c+' ('+o.t+') was removed because it does not apply to your current choices.'); } });
+  if(S.tag && !S.enclosure){ S.tag=null; }
+  if(S.range!==null && S.range!=='tbc' && !isNaN(spF()) && S._rangeSp!==spF()){
+    var r=RANGES[S.range], sp=spF();
+    if(!(sp>=r.f[0]&&sp<=r.f[1])){ S.range=null; notice(3,'Your switching temperature changed and no longer fits the range you picked, so the range was cleared. Please choose a range again.'); }
+    S._rangeSp=spF();
+  }
+}
+
+/* ------------------------- evaluation: feedback per step + points to check ------------------------- */
+function evaluate(){
+  var fb=[[],[],[],[],[],[],[]], pts=[];
+  function add(step,lvl,text,point){ fb[step].push({lvl:lvl,text:text}); if(point) pts.push({lvl:lvl,text:(point===true?text:point)}); }
+  var sp=spF(), pk=pkF(), amb=ambC(), r=curRange(), code=effCode();
+
+  /* step 0 */
+  if(S.hazard==='safe') add(0,'good','The T4 watertight enclosure (NEMA 4X, IP66) is designed for use in virtually all OEM and industrial applications.');
+  if(S.hazard==='haz') add(0,'good','The T7 explosion-proof enclosure (NEMA 7 & 9, IP66) is made for hazardous areas: Class I Div 1 Groups B, C, D and Class II Div 1 Groups E, F, G.');
+  if(S.hazard==='unsure') add(0,'info','We will confirm the area classification with you. Until then your request is based on the T7 explosion-proof enclosure, which also meets NEMA 3, 4 and IP66.','Area classification (hazardous or not) to be confirmed. Request is based on the T7 enclosure until then.');
+  if(S.approval==='tbc') add(0,'info','We will check which hazardous-area approval your site needs.','Hazardous-area approval required (UL/CSA, ATEX, IECEx, UKCA) to be confirmed.');
+  if(S.approval && S.approval!=='tbc') add(0,'good','Good fit: the T7 series lists UL, CSA, ATEX, IECEx, CE and UKCA approvals. We will confirm the exact certificate for your region.');
+
+  /* step 1 */
+  if(!isNaN(sp)){
+    if(sp<-40||sp>750) add(1,'warn','Heads-up: '+fmtF(sp)+' is outside the -40 to 750 °F span covered by the standard ranges.','Switching temperature ('+fmtF(sp)+') is outside the -40 to 750 °F span of the standard ranges.');
+    else add(1,'good','Good fit: '+fmtF(sp)+' is inside the -40 to 750 °F (-40 to 400 °C) span of the standard ranges.');
+    if(sp>525&&sp<=750) add(1,'note','Above 525 °F only the 500 to 750 °F range applies, and it is offered with remote mount systems only.');
+    if(!isNaN(pk)&&pk<sp) add(1,'warn','Heads-up: your highest temperature is lower than the switching temperature. Please double-check the two numbers.','Highest process temperature is lower than the switching temperature. Please re-check.');
+    if(!isNaN(pk)&&pk>900) add(1,'warn','Heads-up: '+fmtF(pk)+' is above the highest maximum temperature in the range table (900 °F).','Highest process temperature ('+fmtF(pk)+') is above the 900 °F maximum in the range table.');
+  }
+  if(S.spText!=='' && isNaN(sp)) add(1,'warn','Please enter the switching temperature as a number, for example 150.');
+  if(isT7() && !isNaN(amb)){
+    if(amb<-20||amb>60) add(1,'warn','Heads-up: the hazardous-area approvals of the T7 are listed for ambient temperatures of -20 to 60 °C. Yours is '+Math.round(amb)+' °C ('+Math.round(C2F(amb))+' °F).','Ambient temperature ('+Math.round(amb)+' °C) is outside the -20 to 60 °C limit (Ta) listed for the T7 hazardous-area approvals.');
+    else add(1,'good','Good fit: '+Math.round(amb)+' °C ambient is inside the -20 to 60 °C limit listed for the T7 approvals.');
+  }
+  if(S.action==='tbc') add(1,'info','We will confirm with you whether the switch should act on a rising or falling temperature.','Switching direction (rising or falling temperature) to be confirmed.');
+
+  /* step 2 */
+  if(S.mount==='direct' && !isNaN(sp) && sp>525) add(2,'warn','Heads-up: your switching temperature is above 525 °F. The 500 to 750 °F range is offered with remote mount systems only.','Direct mount selected but the switching temperature ('+fmtF(sp)+') needs the 500 to 750 °F range, which is remote mount only.');
+  if(S.mount==='remote') add(2,'good','Good fit: remote mount keeps the switch housing away from the process. The sensing bulb and capillary are 316 stainless steel, the flexible armor is 302 stainless steel.');
+  if(S.mount==='direct') add(2,'good','Good fit: direct mount connects with a 1/2 NPT male thread. The wetted parts are 316 stainless steel.');
+  if(S.stem==='long') add(2,'info','The data sheet lists stem lengths from 2¾″ to 24″, but its ordering table stops at 12″. We will confirm longer stems in the quotation.','Stem length longer than 12" requested: to be confirmed (data sheet lists 2 3/4" to 24").');
+  if(S.stem==='tbc') add(2,'info','We will recommend a stem length from your installation details.','Stem length to be recommended from your installation details.');
+  if(S.cap==='long') add(2,'info','Capillaries from 5 to 25 ft are listed. For longer lengths the data sheet says to consult the factory.','Capillary longer than 25 ft requested: consult the factory.');
+  if(S.cap==='tbc') add(2,'info','We will recommend a capillary length from your installation details.','Capillary length to be recommended from your installation details.');
+  if(S.thermowell && S.stem==='027') add(2,'warn','Heads-up: the data sheet shows no matching thermowell dimension for the 2¾″ stem.','Thermowell requested with the 2 3/4" stem: the data sheet lists no matching thermowell "U" dimension for this length.');
+  if(S.thermowell) add(2,'note','Thermowells are ordered separately. We will ask for your process connection details.','Thermowell requested (ordered separately): process connection details needed.');
+
+  /* step 3 */
+  if(S.range==='tbc'){
+    if(r) add(3,'info','We will confirm the range. Based on your switching temperature we would start from '+rangeLabel(r)+'.','Temperature range to be confirmed (starting point: '+rangeLabel(r)+').');
+    else add(3,'warn','Heads-up: none of the standard ranges contains your switching temperature.','No standard range contains the switching temperature.');
+  }
+  if(r){
+    var st=rangeStatus(r), rl=rangeLabel(r);
+    if(S.range!=='tbc'){
+      if(st.contains && st.maxOk && st.avail) add(3,'good','Good fit: '+rl+' contains your switching temperature'+(isNaN(pk)?'.':' and its maximum temperature ('+r.max+' °F) covers your highest temperature.'));
+      if(!isNaN(sp) && !st.contains) add(3,'warn','Heads-up: your switching temperature ('+fmtF(sp)+') is outside the '+rl+' range.','Switching temperature ('+fmtF(sp)+') is outside the selected range ('+rl+').');
+    }
+    if(!st.maxOk) add(3,'warn','Heads-up: this range has a maximum temperature of '+r.max+' °F, but you expect up to '+fmtF(pkF())+'.','Highest process temperature ('+fmtF(pkF())+') is above the '+r.max+' °F maximum of the selected range.');
+    if(st.why.indexOf('remote')>=0) add(3,'warn','Heads-up: the 500 to 750 °F range is available with remote mount systems only. You chose direct mount.',(!isNaN(sp)&&sp>525)?false:'Range 500 to 750 °F selected with direct mount (remote mount only).');
+    if(st.why.indexOf('short')>=0) add(3,'warn','Heads-up: the 350 to 525 °F range is not available with a 2¾″ or 4″ direct mount stem. Choose a longer stem or remote mount.','Range 350 to 525 °F selected with a 2 3/4" or 4" direct-mount stem (not available). Longer stem or remote mount needed.');
+  }
+  if(S.range===null) {}
+
+  /* step 4 */
+  if(S.element==='tbc') add(4,'info','We will choose the switch element with you, based on your voltage and current.','Switch element to be confirmed from your voltage and current.');
+  if(code){
+    var el=elInfo(code), amps=num(S.ampsText);
+    if(S.load==='ac480' && !el.v480) add(4,'warn','Heads-up: element '+code+' is listed for 125/250 Vac. Only element 24 (single) and 64 (dual) are listed up to 480 Vac.','480 Vac load with element '+code+', which is listed for 125/250 Vac only.');
+    if(S.load==='dc' && !el.dc) add(4,'warn','Heads-up: the data sheet lists no DC rating for element '+code+'.','DC load with element '+code+': no DC rating listed on the data sheet.');
+    if(S.load==='low' && ['31','42'].indexOf(baseOf(code))<0) add(4,'info','For very small signals the gold-contact elements (31, 42, 70, 71) are the ones designed for it. We will confirm your choice.','Small-signal load: element '+code+' is not a gold-contact element. Suitability to be confirmed.');
+    if(!isNaN(amps)){
+      var lim = (S.load==='dc') ? (el.dc||0) : el.ac;
+      if(lim && amps>lim) add(4,'warn','Heads-up: element '+code+' is listed for '+lim+' A'+(S.load==='dc'?' DC':'')+', your load is '+amps+' A.','Load current ('+amps+' A) is above the '+lim+' A rating listed for element '+code+'.');
+      else if(lim) add(4,'good','Good fit: '+amps+' A is within the '+lim+' A listed for element '+code+'.');
+    }
+    var db=deadband(code);
+    if(db && r) add(4,'note','Approximate deadband at your range: '+fmtDeltaF(db[0],db[1])+' (from the data sheet range table'+(DU[code]?', dual elements x 1.6':'')+'). Confirmed in the quotation.');
+    else if(r) add(4,'note','The data sheet gives no deadband figure for element '+code+'. We will confirm it in the quotation.');
+    if(baseOf(code)==='27') {}
+  }
+  if(S.load==='unsure') add(4,'info','We will confirm the voltage and current of your circuit before choosing the element.','Voltage, current and type of the electrical load to be confirmed.');
+  if(S.poles==='dual' && S.enclosure==='T4' && S.opts.JK) {}
+
+  /* step 5 */
+  if(S.approval==='eu' && isT7()) add(5,'note','You need ATEX. The T7 has an ATEX Directive 94/9 EC option (CN). Tick it if your project requires it. We will confirm.');
+  if(isT7() && S.poles==='dual') add(5,'note','Data sheet note: terminal blocks (K3) are standard with 700 dual switches.');
+  if(S.opts.FS && !isNaN(sp)) add(5,'good','We will set the setpoint at the factory to '+fmtF(sp)+'.');
+
+  return {fb:fb, pts:pts};
+}
+
+/* ------------------------- selections as rows (summary, review, PDF, request) ------------------------- */
+function labelHazard(){ return {safe:'Ordinary (non-hazardous) area',haz:'Hazardous area (explosive gas or dust)',unsure:'Not sure (to be confirmed)'}[S.hazard]; }
+function labelApproval(){ var a=APPROVALS.filter(function(x){return x.v===S.approval;})[0]; return a?a.t:null; }
+function labelMount(){ return S.mount==='direct'?'Direct mount (rigid stem, code TS)':(S.mount==='remote'?'Remote mount (bulb on capillary)':null); }
+function labelStem(){ if(S.stem==='long') return 'Longer than 12″ (up to 24″), to be confirmed'; if(S.stem==='tbc') return 'Not sure (to be recommended)'; var s=STEMS.filter(function(x){return x.v===S.stem;})[0]; return s?(s.n+' (code '+s.v+')'):null; }
+function labelCap(){ if(S.cap==='long') return 'Longer than 25 ft, consult factory'; if(S.cap==='tbc') return 'Not sure (to be recommended)'; var c=CAPS.filter(function(x){return x.v===S.cap;})[0]; return c?(c.n+' (code '+c.v+')'):null; }
+function labelLoad(){ return {ac:'AC, up to 250 V',ac480:'AC, 480 V',dc:'DC',low:'Very small signal (electronics)',unsure:'Not sure (to be confirmed)'}[S.load]; }
+function labelAction(){ return {rise:'Switch when the temperature rises to the setpoint',fall:'Switch when the temperature falls to the setpoint',tbc:'Not sure (to be confirmed)'}[S.action]; }
+function labelElement(){
+  if(S.element==='tbc') return 'Not sure (to be chosen with you)';
+  var c=effCode(); if(!c) return null; var e=elInfo(c); return c+' - '+e.n+', '+e.spec;
+}
+function optionList(){ var out=[]; OPTS.forEach(function(o){ if(S.opts[o.c]) out.push(o.c+' '+o.t); }); if(S.tag){ var t=TAGS.filter(function(x){return x.v===S.tag;})[0]; out.push(t.v+' '+t.t+(S.tagText?' ("'+S.tagText+'")':'')); } return out; }
+function codeParts(){
+  var P=[], r=curRange(), c=effCode(), opts=[];
+  OPTS.forEach(function(o){ if(S.opts[o.c]) opts.push(o.c); }); if(S.tag) opts.push(S.tag);
+  P.push(['Enclosure', S.enclosure ? S.enclosure+(S.hazard==='unsure'?' (to be confirmed)':'') : '--']);
+  P.push(['Switch element', S.element==='tbc'?'??':(c||'--')]);
+  if(S.mount==='remote'){ P.push(['Thermal system', (S.cap&&S.cap!=='tbc'&&S.cap!=='long')?S.cap:'T??']); P.push(['Bulb length','030']); }
+  else if(S.mount==='direct'){ P.push(['Thermal system','TS']); P.push(['Bulb length',(S.stem&&S.stem!=='tbc'&&S.stem!=='long')?S.stem:'???']); }
+  else { P.push(['Thermal system','--']); P.push(['Bulb length','--']); }
+  P.push(['Options', opts.length?'X: '+opts.join(', '):'none']);
+  P.push(['Range', r?rangeCode(r):'--']);
+  return P;
+}
+function rows(){
+  var R=[], sp=spF(), pk=pkF(), amb=ambC(), r=curRange();
+  function add(l,v,s){ if(v!==null&&v!==undefined&&v!=='') R.push({label:l,value:v,step:s}); }
+  add('Used for', S.use, 0);
+  add('Area', S.hazard?labelHazard():null, 0);
+  if(S.enclosure) add('Enclosure', S.enclosure==='T4'?'T4 watertight, NEMA 4X, IP66':'T7 explosion-proof, NEMA 7 & 9, IP66'+(S.hazard==='unsure'?' (to be confirmed)':''), 0);
+  if(isT7()) add('Approval needed', labelApproval(), 0);
+  add('Switching temperature', isNaN(sp)?null:fmtF(sp), 1);
+  add('Highest temperature', isNaN(pk)?null:fmtF(pk), 1);
+  if(isT7()) add('Ambient temperature', isNaN(amb)?null:(Math.round(amb)+' °C ('+Math.round(C2F(amb))+' °F)'), 1);
+  add('Switching direction', S.action?labelAction():null, 1);
+  add('Mounting', labelMount(), 2);
+  if(S.mount==='direct') add('Stem length', labelStem(), 2);
+  if(S.mount==='remote'){ add('Capillary length', labelCap(), 2); add('Bulb', '3″ (code 030)', 2); }
+  if(S.thermowell) add('Thermowell', 'Wanted (ordered separately)', 2);
+  if(S.range!==null) add('Temperature range', r?(rangeLabel(r)+(S.range==='tbc'?' - to be confirmed':'')):'To be confirmed', 3);
+  if(r && S.range!==null) add('Range maximum temperature', r.max+' °F', 3);
+  if(S.poles) add('Switch type', S.poles==='dual'?'Two switches (2 SPDT acting as DPDT)':'One switch (SPDT)', 4);
+  add('Switch element', labelElement(), 4);
+  add('Electrical load', S.load?(labelLoad()+(isNaN(num(S.ampsText))?'':', '+num(S.ampsText)+' A')):null, 4);
+  var db=deadband(effCode()); if(db) add('Approx. deadband', fmtDeltaF(db[0],db[1]), 4);
+  var ol=optionList(); if(S.step>=5||ol.length) add('Options', ol.length?ol.join('; '):'None', 5);
+  return R;
+}
+
+/* ------------------------- validity per step ------------------------- */
+function missing(i){
+  var m=[];
+  if(i===0){ if(!S.use) m.push('what it is used for'); if(!S.hazard) m.push('the type of area'); if((S.hazard==='haz'||S.hazard==='unsure') && !S.approval) m.push('the approval you need'); }
+  if(i===1){ if(isNaN(spF())) m.push('the switching temperature'); if(S.pkText!=='' && isNaN(num(S.pkText))) m.push('a number for the highest temperature'); if(S.ambText!=='' && isNaN(num(S.ambText))) m.push('a number for the ambient temperature'); if(!S.action) m.push('what the switch should do'); }
+  if(i===2){ if(!S.mount) m.push('direct or remote mount'); else if(S.mount==='direct' && !S.stem) m.push('a stem length'); else if(S.mount==='remote' && !S.cap) m.push('a capillary length'); }
+  if(i===3){ if(S.range===null) m.push('a temperature range'); }
+  if(i===4){ if(!S.poles) m.push('one or two switches'); if(!S.load) m.push('the electrical load'); if(!S.element) m.push('a switch type'); }
+  if(i===6){ if(!(S.qty>=1)) m.push('a quantity'); }
+  return m;
+}
+function valid(i){ return missing(i).length===0; }
+function reachable(j){ for(var i=0;i<j;i++) if(!valid(i)) return false; return true; }
+
+/* ------------------------- rendering ------------------------- */
+function card(o){
+  var id=(o.name+'-'+o.value).replace(/[^a-z0-9_-]/gi,'_');
+  return '<label class="opt'+(o.checked?' is-on':'')+(o.disabled?' is-off':'')+'" for="'+id+'">'+
+    '<input type="'+(o.type||'radio')+'" id="'+id+'" name="'+esc(o.name)+'" value="'+esc(o.value)+'" data-k="'+esc(o.k||o.name)+'"'+(o.checked?' checked':'')+(o.disabled?' disabled':'')+'>'+
+    '<span class="opt-body"><span class="opt-title">'+o.title+(o.badge?'<span class="badge'+(o.soft?' soft':'')+'">'+o.badge+'</span>':'')+'</span>'+
+    (o.desc?'<span class="opt-desc">'+o.desc+'</span>':'')+(o.note?'<span class="opt-note">'+o.note+'</span>':'')+(o.fit!==undefined?'<span class="fit" data-fit="'+esc(o.fit)+'"></span>':'')+'</span></label>';
+}
+function help(step,html){
+  return '<details class="help" data-help="'+step+'"'+(S.help[step]?' open':'')+'><summary>Not sure? Help me choose</summary><div class="in">'+html+'</div></details>';
+}
+function fbHtml(step){
+  var ev=evaluate().fb[step], out='';
+  ev.forEach(function(m){ var lab={good:'Good fit:',warn:'Heads-up:',info:'We’ll confirm:',note:'Good to know:'}[m.lvl]; var t=m.text.replace(/^(Good fit:|Heads-up:)\s*/,'');
+    out+='<div class="msg msg-'+m.lvl+'"><span><strong>'+lab+'</strong> '+esc(t)+'</span></div>'; });
+  return out;
+}
+function noticesHtml(step){
+  return S.notices.filter(function(n){return n.step===step;}).map(function(n){return '<div class="notice" role="status"><strong>We updated your answers:</strong> '+esc(n.text)+'</div>';}).join('');
+}
+function head(step,title,lead){ return '<h2 id="stepTitle" tabindex="-1">'+esc(title)+'</h2><p class="lead">'+lead+'</p>'+noticesHtml(step); }
+
+var V = {};
+V[0]=function(){
+  var h=head(0,'Where will the switch be used?','Tell us about the place where the switch will be installed. This decides the type of housing.');
+  h+='<fieldset class="q"><legend>What is the switch for?</legend><p class="qsub">Pick the closest match.</p><div class="pills">';
+  USES.forEach(function(u,i){ h+=card({name:'use',value:u,k:'use',checked:S.use===u,title:esc(u)}); });
+  h+='</div></fieldset>';
+  h+='<fieldset class="q"><legend>What is the area around the switch like?</legend><div class="cards">';
+  h+=card({name:'hazard',value:'safe',checked:S.hazard==='safe',title:'Ordinary area',desc:'No explosive gas, vapor or dust. Rain, water and dirt are the main concerns.',note:'Ashcroft T4: watertight housing, NEMA 4X, IP66.'});
+  h+=card({name:'hazard',value:'haz',checked:S.hazard==='haz',title:'Hazardous area',desc:'Explosive gas, vapor or dust can be present (for example oil and gas, chemical plants).',note:'Ashcroft T7: explosion-proof housing, NEMA 7 & 9, IP66.'});
+  h+=card({name:'hazard',value:'unsure',checked:S.hazard==='unsure',title:'I am not sure',desc:'We will check with you. Meanwhile we base your request on the T7, which also meets NEMA 3, 4 and IP66.'});
+  h+='</div></fieldset>';
+  if(S.hazard==='haz'||S.hazard==='unsure'){
+    h+='<fieldset class="q"><legend>Which hazardous-area approval do you need?</legend><div class="cards">';
+    APPROVALS.forEach(function(a){ h+=card({name:'approval',value:a.v,checked:S.approval===a.v,title:a.t,desc:a.d}); });
+    h+='</div></fieldset>';
+  }
+  h+='<div class="fb" id="fb" aria-live="polite"></div>';
+  h+=help(0,'<p><strong>Ordinary area (T4):</strong> watertight enclosure that meets NEMA 3, 4, 4X, 13 and IP66.</p><p><strong>Hazardous area (T7):</strong> explosion-proof enclosure that meets NEMA 3, 4, 7 &amp; 9 and IP66.</p><p>If flammable gas, vapor or dust could ever be present, ask your safety officer for the area classification. If nobody can tell you yet, choose "I am not sure" and we will follow up.</p>');
+  return h;
+};
+V[1]=function(){
+  var u=S.unit;
+  var h=head(1,'What temperature should it switch at?','Tell us the temperature where the switch should act, and how hot the surroundings get.');
+  h+='<div class="unit" role="radiogroup" aria-label="Temperature unit"><label><input type="radio" id="unit-F" name="unit" value="F" data-k="unit"'+(u==='F'?' checked':'')+'><span>°F</span></label><label><input type="radio" id="unit-C" name="unit" value="C" data-k="unit"'+(u==='C'?' checked':'')+'><span>°C</span></label></div>';
+  h+='<div class="input-row"><div class="field"><label for="spText">Switching temperature (°'+u+') <span aria-hidden="true">*</span><span class="hint">The temperature where the switch should act (the setpoint).</span></label><input type="text" inputmode="decimal" autocomplete="off" id="spText" data-t="spText" value="'+esc(S.spText)+'" placeholder="e.g. '+(u==='F'?'150':'65')+'"></div>';
+  h+='<div class="field"><label for="pkText">Highest temperature the process can reach (°'+u+')<span class="hint">Optional. Helps us check the range limit.</span></label><input type="text" inputmode="decimal" autocomplete="off" id="pkText" data-t="pkText" value="'+esc(S.pkText)+'" placeholder="e.g. '+(u==='F'?'200':'95')+'"></div></div>';
+  if(isT7()) h+='<div class="field"><label for="ambText">Air temperature around the housing (°'+u+')<span class="hint">Optional. The T7 hazardous-area approvals are listed for -20 to 60 °C.</span></label><input type="text" inputmode="decimal" autocomplete="off" id="ambText" data-t="ambText" value="'+esc(S.ambText)+'" placeholder="e.g. '+(u==='F'?'86':'30')+'"></div>';
+  h+='<fieldset class="q"><legend>What should the switch do at that temperature?</legend><div class="cards">';
+  h+=card({name:'action',value:'rise',checked:S.action==='rise',title:'Act when it gets too hot',desc:'The switch changes over when the temperature rises to the setpoint (over-temperature alarm or shutdown).'});
+  h+=card({name:'action',value:'fall',checked:S.action==='fall',title:'Act when it gets too cold',desc:'The switch changes over when the temperature falls to the setpoint (low-temperature alarm).'});
+  h+=card({name:'action',value:'tbc',checked:S.action==='tbc',title:'Not sure',desc:'We will talk it through with you.'});
+  h+='</div></fieldset><div class="fb" id="fb" aria-live="polite"></div>';
+  h+=help(1,'<ul><li><strong>Switching temperature</strong> is the value you want the switch to react at. The switch can be set anywhere from 0 to 100% of its temperature range.</li><li><strong>Highest temperature</strong> is the hottest the process could get, including upsets. Each range has a maximum temperature it can withstand.</li></ul><p>Not sure of the numbers? Enter your best estimate. We will check them with you before quoting.</p>');
+  return h;
+};
+V[2]=function(){
+  var h=head(2,'How will it be installed?','Choose how the temperature sensor reaches the process, and how long it needs to be.');
+  h+='<fieldset class="q"><legend>How do you want to mount it?</legend><div class="cards">';
+  h+=card({name:'mount',value:'direct',checked:S.mount==='direct',title:'Direct mount',desc:'A rigid stem screws straight into the pipe, tank or thermowell. The housing sits right on top.',note:'Process connection: 1/2 NPT male. Wetted parts: 316 stainless steel.'});
+  h+=card({name:'mount',value:'remote',checked:S.mount==='remote',title:'Remote mount',desc:'The sensing bulb sits in the process and connects by a flexible capillary to a housing mounted elsewhere.',note:'Capillary lengths from 5 to 25 ft. Bulb and capillary: 316 stainless steel, armor: 302 stainless steel.'});
+  h+='</div></fieldset>';
+  if(S.mount==='direct'){
+    h+='<fieldset class="q"><legend>How long should the stem be?</legend><p class="qsub">This is the part that goes into the process. Thermowells are ordered separately.</p><div class="cards two">';
+    STEMS.forEach(function(s){ h+=card({name:'stem',value:s.v,checked:S.stem===s.v,title:s.n+' stem',desc:s.u?'Thermowell "U" dimension: '+s.u:'Thermowell "U" dimension: not applicable',note:'Code '+s.v}); });
+    h+=card({name:'stem',value:'long',checked:S.stem==='long',title:'Longer (up to 24″)',desc:'Confirmed in the quotation.'});
+    h+=card({name:'stem',value:'tbc',checked:S.stem==='tbc',title:'Not sure',desc:'We will recommend a length from your installation details.'});
+    h+='</div></fieldset>';
+  }
+  if(S.mount==='remote'){
+    h+='<fieldset class="q"><legend>How long should the capillary be?</legend><p class="qsub">The sensing bulb is 3″ long (only size, code 030). It fits a thermowell with a 2½″ "U" dimension, ordered separately.</p><div class="cards three">';
+    CAPS.forEach(function(c){ h+=card({name:'cap',value:c.v,checked:S.cap===c.v,title:c.n,note:'Code '+c.v,badge:c.v==='T05'?'Data sheet example':null,soft:true}); });
+    h+='</div><div class="cards" style="margin-top:10px">';
+    h+=card({name:'cap',value:'long',checked:S.cap==='long',title:'Longer than 25 ft',desc:'Consult the factory (per the data sheet).'});
+    h+=card({name:'cap',value:'tbc',checked:S.cap==='tbc',title:'Not sure',desc:'We will recommend a length from your installation details.'});
+    h+='</div></fieldset>';
+  }
+  if(S.mount){
+    h+='<fieldset class="q"><legend>Do you also need a thermowell?</legend><div class="cards">'+card({type:'checkbox',name:'thermowell',value:'1',k:'thermowell',checked:S.thermowell,title:'Yes, please include a thermowell in my quotation',desc:'A thermowell is a protective sleeve that lets you remove the switch without draining the process. It is ordered separately.'})+'</div></fieldset>';
+  }
+  h+='<div class="fb" id="fb" aria-live="polite"></div>';
+  h+=help(2,'<ul><li><strong>Direct mount</strong> is the simplest. The switch and sensor are one piece.</li><li><strong>Remote mount</strong> suits places with vibration, high temperatures or limited access, because the housing can sit away from the process.</li><li>The 500 to 750 °F range is offered with remote mount only.</li></ul><p>Not sure how long the stem should be? Choose "Not sure" and tell us the pipe or tank size in the notes at the end.</p>');
+  return h;
+};
+V[3]=function(){
+  var h=head(3,'Which temperature range?','The switch works inside one range. Your switching temperature must sit within it.');
+  var rec=recommended();
+  h+='<fieldset class="q"><legend>Choose the range</legend><p class="qsub">Ranges overlap, so more than one can fit. A smaller range gives a finer setting because the repeatability is +/-1% of span.</p><div class="cards two">';
+  RANGES.forEach(function(r,i){
+    var st=rangeStatus(r), tags=[];
+    if(st.contains) tags.push('fits your setpoint'); else tags.push('setpoint outside');
+    var note='Maximum temperature '+r.max+' °F.'+(r.remoteOnly?' Remote mount only.':'')+(r.noShortDirect?' Not with 2¾″ or 4″ direct stem.':'');
+    h+=card({name:'range',value:String(i),checked:S.range===i,title:r.f[0]+' to '+r.f[1]+' °F',desc:'('+r.c[0]+' to '+r.c[1]+' °C)',note:note,badge:(i===rec?'Suggested':(r.example?'Data sheet example':null)),soft:(i!==rec),fit:String(i)});
+  });
+  h+='</div><div class="cards" style="margin-top:10px">'+card({name:'range',value:'tbc',checked:S.range==='tbc',title:'Not sure, choose for me',desc:'We will suggest the best-fitting range and confirm it with you.'})+'</div></fieldset>';
+  h+='<div class="fb" id="fb" aria-live="polite"></div>';
+  h+=help(3,'<p>The setpoint can be adjusted anywhere between 0 and 100% of the range. The "Suggested" range is the narrowest one that contains your switching temperature and covers your highest temperature.</p><p>Ranges are shown in both °F and °C. The maximum temperature is the highest temperature listed for that range.</p>');
+  return h;
+};
+V[4]=function(){
+  var h=head(4,'What will the switch control?','This decides the electrical part inside the switch (the "switch element").');
+  h+='<fieldset class="q"><legend>How many switches do you need?</legend><div class="cards two">';
+  h+=card({name:'poles',value:'single',checked:S.poles==='single',title:'One switch (SPDT)',desc:'One set of contacts. Enough for most alarms and controls.'});
+  h+=card({name:'poles',value:'dual',checked:S.poles==='dual',title:'Two switches (DPDT)',desc:'Two SPDT switches acting together, for two circuits at the same setpoint.'});
+  h+='</div></fieldset>';
+  h+='<fieldset class="q"><legend>What kind of electrical load will it switch?</legend><div class="cards two">';
+  [['ac','AC, up to 250 V','Mains-type circuits, 125/250 Vac.'],['ac480','AC, 480 V','Higher-voltage circuits.'],['dc','DC','Direct current loads.'],['low','Very small signal','Electronic inputs with tiny currents.'],['unsure','Not sure','We will check with you.']].forEach(function(l){ h+=card({name:'load',value:l[0],checked:S.load===l[0],title:l[1],desc:l[2]}); });
+  h+='</div></fieldset>';
+  h+='<div class="field" style="max-width:320px"><label for="ampsText">Load current in amps<span class="hint">Optional. We compare it with the element rating.</span></label><input type="text" inputmode="decimal" autocomplete="off" id="ampsText" data-t="ampsText" value="'+esc(S.ampsText)+'" placeholder="e.g. 5"></div>';
+  h+='<fieldset class="q"><legend>Which switch type fits best?</legend><p class="qsub">Ratings are from the data sheet.</p>';
+  GROUPS.forEach(function(g){
+    var els=Object.keys(EL).filter(function(k){return EL[k].g===g[0];});
+    if(!els.length) return;
+    h+='<div class="group-h">'+g[1]+'</div><div class="cards two">';
+    els.forEach(function(k){
+      var e=EL[k], dual=(S.poles==='dual'), code=dual?e.dual:k, dis=dual&&!e.dual;
+      var info=dual&&e.dual?DU[e.dual]:e;
+      h+=card({name:'element',value:k,checked:S.element===k,disabled:dis,title:(code||k)+' - '+(dual&&e.dual?info.n:e.n),desc:e.plain,note:dis?'Not offered with two switches.':info.spec,badge:e.example?'Data sheet example':null,soft:true,fit:code||''});
+    });
+    h+='</div>';
+  });
+  h+='<div class="cards" style="margin-top:14px">'+card({name:'element',value:'tbc',checked:S.element==='tbc',title:'Not sure, help me choose',desc:'Tell us the voltage and current in the notes at the end and we will pick the element.'})+'</div></fieldset>';
+  h+='<div class="fb" id="fb" aria-live="polite"></div>';
+  h+=help(4,'<ul><li><strong>Deadband</strong> is how far the temperature must move back before the switch resets. A narrow deadband resets soon after the setpoint. Values for your range are shown once you pick a switch type.</li><li><strong>Hermetically sealed</strong> switches have improved reliability and safety (UL Class I Div II approval).</li><li><strong>Gold contacts</strong> are made for very small signals.</li></ul><p>Not sure about your load? Ask whoever wires the circuit for the voltage and current, or pick "Not sure".</p>');
+  return h;
+};
+V[5]=function(){
+  var h=head(5,'Extras and options','Everything here is optional. Skip it if you only need the basic switch.');
+  OGROUPS.forEach(function(g){
+    var list=OPTS.filter(function(o){return o.g===g[0] && optAvail(o);});
+    var extra=(g[0]==='wire' && isT7());
+    if(!list.length && !extra) return;
+    h+='<div class="group-h">'+g[1]+'</div><div class="cards two">';
+    list.forEach(function(o){ h+=card({type:'checkbox',name:'opt_'+o.c,value:o.c,k:'opt',checked:!!S.opts[o.c],title:o.t,badge:o.c,soft:true,desc:o.d,note:o.n||''}); });
+    if(extra) h+='<div class="opt is-off" style="opacity:1;cursor:default"><span class="opt-body"><span class="opt-title">Left conduit connection<span class="badge soft">JK</span></span><span class="opt-desc">Standard on the T7. Nothing to add.</span></span></div>';
+    h+='</div>';
+  });
+  h+='<div class="group-h">Tagging</div><div class="cards two">';
+  h+=card({name:'tag',value:'none',checked:!S.tag,title:'No tag'});
+  TAGS.forEach(function(t){ h+=card({name:'tag',value:t.v,checked:S.tag===t.v,title:t.t,badge:t.v,soft:true,desc:t.d}); });
+  h+='</div>';
+  if(S.tag) h+='<div class="field" style="margin-top:12px"><label for="tagText">Text for the tag<span class="hint">For example your instrument tag number.</span></label><input type="text" id="tagText" data-t="tagText" maxlength="60" value="'+esc(S.tagText)+'"></div>';
+  h+='<div class="fb" id="fb" aria-live="polite" style="margin-top:16px"></div>';
+  h+=help(5,'<p>Each option has a short code (for example NH, LE). Codes are used in the ordering code. We add them to your quotation request for you.</p><p>Availability differs between the T4 and the T7, so you only see the options that apply to your choice.</p>');
+  return h;
+};
+V[6]=function(){
+  var pts=evaluate().pts;
+  var h=head(6,'Review your configuration','Check your choices. Use "Change" to jump back to any step.');
+  h+='<table class="rv"><tbody>';
+  rows().forEach(function(r){ h+='<tr><th scope="row">'+esc(r.label)+'</th><td>'+esc(r.value)+'</td><td><button type="button" class="link" data-goto="'+r.step+'" aria-label="Change '+esc(r.label)+'">Change</button></td></tr>'; });
+  h+='</tbody></table>';
+  h+='<div class="q"><span class="qh">Indicative ordering code parts</span><p class="qsub">In data sheet order. Ashcroft confirms the final ordering code in the quotation.</p><div class="code-parts">';
+  codeParts().forEach(function(p){ h+='<span class="chip"><small>'+esc(p[0])+'</small> '+esc(p[1])+'</span>'; });
+  h+='</div></div>';
+  if(pts.length){ h+='<div class="points" role="region" aria-label="Points we will check with you"><h3>Points we will check with you</h3><ul>'+pts.map(function(p){return '<li>'+esc(p.text)+'</li>';}).join('')+'</ul></div>'; }
+  h+='<div class="input-row"><div class="field"><label for="qty">Quantity</label><input type="number" id="qty" min="1" step="1" inputmode="numeric" value="'+esc(S.qty)+'"></div></div>';
+  h+='<div class="field"><label for="notes">Notes for us<span class="hint">Anything else we should know: process fluid, pipe size, voltage, deadline...</span></label><textarea id="notes" data-t="notes" maxlength="1500">'+esc(S.notes)+'</textarea></div>';
+  h+='<div class="actions"><button type="button" class="btn btn-secondary" id="btnPdf">Download as PDF</button><button type="button" class="btn btn-accent" id="btnQuote">Get a quotation</button></div>';
+  h+='<p class="small">No prices are shown here. Pricing and delivery time come with the quotation. This summary is non-binding.</p>';
+  return h;
+};
+
+function renderPanel(){
+  $('#panel').innerHTML = V[S.step]();
+  paintDyn();
+}
+function renderStepper(){
+  var h='';
+  STEPS.forEach(function(s,i){
+    var cur=i===S.step, done=!cur && !!S.visited[i] && valid(i), ok=reachable(i);
+    h+='<li><button type="button" class="step-btn'+(done?' done':'')+'" data-step="'+i+'"'+(cur?' aria-current="step"':'')+(ok?'':' disabled')+'><span class="dot" aria-hidden="true">'+(done?'✓':(i+1))+'</span><span class="lbl">'+s.name+'</span><span class="sr" style="position:absolute;left:-9999px">'+(done?' (completed)':'')+'</span></button></li>';
+  });
+  $('#stepper').innerHTML=h;
+  $('#progressBar').style.width=((S.step)/(STEPS.length-1)*100)+'%';
+  $('#stepNow').textContent='Step '+(S.step+1)+' of '+STEPS.length+': '+STEPS[S.step].name;
+}
+function renderSummary(){
+  var key=photoKey(), ph='';
+  if(key){ ph='<div class="ph"><div class="imgs"><img src="'+IMG[key]+'" alt="'+(key==='t4'?'Ashcroft T4 NEMA 4X temperature switch, direct mount':'Ashcroft T7 NEMA 7 and 9 temperature switch, remote mount')+'"></div><small>'+esc(photoCaption())+'</small></div>'; }
+  else ph='<div class="ph two"><div class="imgs"><img src="'+IMG.t4+'" alt="Ashcroft T4 temperature switch"><img src="'+IMG.t7+'" alt="Ashcroft T7 temperature switch"></div><small>T4 (watertight) and T7 (explosion-proof)</small></div>';
+  var R=rows(), h=ph+'<div class="sb"><h3>'+esc(modelName())+'</h3>';
+  var sub=[]; if(S.mount) sub.push(S.mount==='direct'?'Direct mount':'Remote mount'); var r=curRange(); if(r&&S.range!==null) sub.push(r.f[0]+' to '+r.f[1]+' °F'); if(S.poles) sub.push(S.poles==='dual'?'DPDT':'SPDT');
+  h+='<p class="sub">'+(sub.length?esc(sub.join(' · ')):'Your choices will appear here.')+'</p>';
+  if(R.length){ h+='<dl>'; R.forEach(function(x){ h+='<div><dt>'+esc(x.label)+'</dt><dd>'+esc(x.value)+'</dd></div>'; }); h+='</dl>'; }
+  else h+='<p class="empty">Nothing selected yet.</p>';
+  if(S.enclosure){ h+='<div class="chips" aria-label="Indicative ordering code parts">'; codeParts().forEach(function(p){ h+='<span class="chip"><small>'+esc(p[0])+'</small> '+esc(p[1])+'</span>'; }); h+='</div>'; }
+  var n=evaluate().pts.length; if(n) h+='<p class="ptcount">'+n+' point'+(n>1?'s':'')+' we will check with you</p>';
+  h+='</div>';
+  $('#summary').innerHTML=h;
+}
+function renderBar(){
+  var m=missing(S.step), back=$('#btnBack'), next=$('#btnNext'), hint=$('#btnHint'), bar=$('#actionbar');
+  back.style.visibility = S.step===0 ? 'hidden' : 'visible';
+  bar.classList.toggle('rv-bar', S.step===6);
+  if(S.step===6){ next.style.display='none'; hint.textContent = m.length?('Still needed: '+m.join(', ')+'.'):''; }
+  else { next.style.display=''; next.disabled = m.length>0; next.setAttribute('aria-disabled', m.length>0?'true':'false'); next.textContent = S.step===5?'Review':'Continue'; hint.textContent = m.length?('Still needed: '+m.join(', ')+'.'):''; }
+}
+function paintFit(){
+  $$('[data-fit]').forEach(function(el){
+    var f=el.getAttribute('data-fit'), txt='', cls='';
+    if(S.step===3){ var r=RANGES[+f], st=rangeStatus(r);
+      if(!isNaN(spF())){ if(st.contains&&st.maxOk&&st.avail){txt='Fits your setpoint';cls='ok';} else if(!st.contains){txt='Your setpoint is outside this range';cls='no';} else if(!st.avail){txt='Not available with your installation';cls='no';} else if(!st.maxOk){txt='Maximum is below your highest temperature';cls='no';} } }
+    if(S.step===4 && f){ var el2=elInfo(f), amps=num(S.ampsText);
+      if(S.load==='ac480'){ txt=el2.v480?'Rated for 480 Vac':'Not rated for 480 Vac'; cls=el2.v480?'ok':'no'; }
+      else if(S.load==='dc'){ txt=el2.dc?'Has a DC rating':'No DC rating listed'; cls=el2.dc?'ok':'no'; }
+      else if(S.load==='low'){ var b=baseOf(f); var g=(b==='31'||b==='42'); txt=g?'Gold contacts, made for small signals':''; cls=g?'ok':''; }
+      if(!isNaN(amps) && S.load!=='low'){ var lim=(S.load==='dc')?(el2.dc||0):el2.ac; if(lim){ txt=(amps<=lim?'Handles '+amps+' A':'Rated for '+lim+' A only'); cls=amps<=lim?'ok':'no'; } }
+    }
+    el.textContent=txt; el.className='fit'+(cls?' '+cls:'');
+  });
+}
+function paintDyn(){
+  var fb=$('#fb'); if(fb) fb.innerHTML=fbHtml(S.step);
+  paintFit(); renderSummary(); renderBar(); renderStepper();
+}
+function focusHeading(){ var h=$('#stepTitle'); if(h){ h.focus({preventScroll:true}); } }
+function go(i,opts){
+  var prev=S.step; S.notices=S.notices.filter(function(n){return n.step!==prev||i===prev;}); /* a notice is shown once, then dropped when the buyer leaves that step */
+  S.step=i; S.visited[i]=true; renderPanel();
+  var top=$('#stepper').getBoundingClientRect().top+window.pageYOffset-8;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({top:Math.max(0,top),behavior:reduce?'auto':'smooth'});
+  focusHeading();
+}
+function refresh(){
+  var id=document.activeElement&&document.activeElement.id;
+  renderPanel();
+  if(id){ var el=document.getElementById(id); if(el&&el!==document.activeElement){ el.focus({preventScroll:true}); } }
+}
+
+/* ------------------------- input handling ------------------------- */
+function act(k,v,el){
+  switch(k){
+    case 'use': S.use=v; break;
+    case 'hazard': S.hazard=v; break;
+    case 'approval': S.approval=v; break;
+    case 'unit': if(v!==S.unit){ ['spText','pkText','ambText'].forEach(function(f){ var n=num(S[f]); if(!isNaN(n)) S[f]=String(r1(v==='C'?F2C(n):C2F(n))); }); S.unit=v; } break;
+    case 'action': S.action=v; break;
+    case 'mount': S.mount=v; break;
+    case 'stem': S.stem=v; break;
+    case 'cap': S.cap=v; break;
+    case 'thermowell': S.thermowell=!!el.checked; break;
+    case 'range': S.range=(v==='tbc')?'tbc':+v; S._rangeSp=spF(); break;
+    case 'poles': S.poles=v; break;
+    case 'load': S.load=v; break;
+    case 'element': S.element=v; break;
+    case 'opt': if(el.checked) S.opts[v]=1; else delete S.opts[v]; break;
+    case 'tag': S.tag=(v==='none')?null:v; if(!S.tag) S.tagText=''; break;
+  }
+  constrain(); refresh();
+}
+document.addEventListener('change',function(e){
+  var t=e.target; if(!t.matches) return;
+  if(t.matches('input[data-k]')) act(t.getAttribute('data-k'), t.value, t);
+  else if(t.id==='qty'){ var q=parseInt(t.value,10); S.qty=isNaN(q)?0:Math.max(0,q); paintDyn(); }
+});
+document.addEventListener('input',function(e){
+  var t=e.target; if(!t.getAttribute) return;
+  var f=t.getAttribute('data-t');
+  if(f){ S[f]=t.value; constrain(); paintDyn(); }
+  else if(t.id==='qty'){ var q=parseInt(t.value,10); S.qty=isNaN(q)?0:q; renderBar(); }
+});
+document.addEventListener('toggle',function(e){ var t=e.target; if(t&&t.matches&&t.matches('details.help')){ S.help[t.getAttribute('data-help')]=t.open; } },true);
+document.addEventListener('click',function(e){
+  var t=e.target.closest?e.target.closest('[data-step],[data-goto],#btnPdf,#btnQuote'):null; if(!t) return;
+  if(t.hasAttribute('data-step')){ var i=+t.getAttribute('data-step'); if(reachable(i)) go(i); }
+  else if(t.hasAttribute('data-goto')) go(+t.getAttribute('data-goto'));
+  else if(t.id==='btnPdf'){ if(valid(6)) downloadPdf(); else toast('Please enter a quantity of 1 or more.'); }
+  else if(t.id==='btnQuote'){ if(valid(6)) openQuote(); else toast('Please enter a quantity of 1 or more.'); }
+});
+$('#btnBack').addEventListener('click',function(){ if(S.step>0) go(S.step-1); });
+$('#btnNext').addEventListener('click',function(){ if(valid(S.step) && S.step<STEPS.length-1){ go(S.step+1); } });
+
+var toastTimer;
+function toast(msg){ var t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.hidden=true;},3200); }
+
+/* ------------------------- text for the request ------------------------- */
+function pdfSafe(s){
+  return String(s).replace(/[″˝“”]/g,'"').replace(/[′´’‘]/g,"'").replace(/[–—−]/g,'-')
+    .replace(/·/g,'-').replace(/≥/g,'>=').replace(/≤/g,'<=').replace(/→/g,'->').replace(/✓/g,'').replace(/₂/g,'2')
+    .replace(/(\d)½/g,'$1 1/2').replace(/(\d)¾/g,'$1 3/4').replace(/½/g,'1/2').replace(/¾/g,'3/4').replace(/ /g,' ')
+    .replace(/[^\x20-\x7E\n¡-ÿ]/g,'?');
+}
+function plain(s){ return pdfSafe(s); }
+function pointsList(){ var seen={}, out=[]; evaluate().pts.forEach(function(p){ if(!seen[p.text]){ seen[p.text]=1; out.push(p.text); } }); return out; }
+function subjectLine(){ return 'Quotation request: '+modelShort()+' ('+S.ref+') | '+SETTINGS.TRACKING_TAG; }
+function configLines(){
+  var L=[]; L.push('Model: '+modelName());
+  rows().forEach(function(r){ L.push(r.label+': '+r.value); });
+  L.push('Indicative ordering code parts: '+codeParts().map(function(p){return p[0]+' '+p[1];}).join(' | '));
+  L.push('Quantity: '+S.qty);
+  return L.map(plain);
+}
+function requestBody(f){
+  var L=[];
+  L.push('Hello,','','Please send me a quotation for the temperature switch configured below.','');
+  L.push('CUSTOMER'); L.push('Name: '+f.name); L.push('Company: '+f.company); L.push('Email: '+f.email); if(f.phone) L.push('Phone: '+f.phone); if(f.place) L.push('Delivery place: '+f.place); L.push('');
+  L.push('CONFIGURATION (reference '+S.ref+')'); configLines().forEach(function(x){L.push('- '+x);}); L.push('');
+  var pts=pointsList(); if(pts.length){ L.push('POINTS TO CHECK'); pts.forEach(function(p){L.push('- '+plain(p));}); L.push(''); }
+  if(S.notes) L.push('CONFIGURATOR NOTES: '+S.notes,'');
+  if(f.message) L.push('MESSAGE: '+f.message,'');
+  L.push('I will attach the PDF summary (downloaded from the configurator).','','Kind regards,',f.name+(f.company?', '+f.company:''));
+  return L.join('\n');
+}
+function requestFull(f){
+  return 'To: '+SETTINGS.QUOTE_TO+'\nCc: '+SETTINGS.QUOTE_CC+'\nSubject: '+subjectLine()+'\n\n'+requestBody(f);
+}
+function buildMailto(f){
+  var q='cc='+encodeURIComponent(SETTINGS.QUOTE_CC).replace(/%40/g,'@')+'&subject='+encodeURIComponent(subjectLine())+'&body='+encodeURIComponent(requestBody(f));
+  return 'mailto:'+SETTINGS.QUOTE_TO+'?'+q;
+}
+
+/* ------------------------- PDF ------------------------- */
+function buildPdf(){
+  var jsPDF=window.jspdf.jsPDF, doc=new jsPDF({unit:'mm',format:'a4',compress:true});
+  var W=210,H=297,M=15,CW=W-2*M,y=0,pageNo=1;
+  var BLUE=[0,87,184],ORANGE=[227,82,5],LIGHT=[241,244,249],GREY=[94,94,94],TXT=[40,40,40];
+  function T(s){return pdfSafe(s);}
+  var lp=doc.getImageProperties(IMG.logo), lw=36, lh=lw*lp.height/lp.width;
+  function pageHeader(first){
+    if(first){
+      doc.addImage(IMG.logo,'PNG',M,12,lw,lh);
+      doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(BLUE[0],BLUE[1],BLUE[2]);
+      doc.text('Temperature switch configuration',W-M,17,{align:'right'});
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(GREY[0],GREY[1],GREY[2]);
+      doc.text('Date: '+today()+'    Reference: '+S.ref,W-M,23,{align:'right'});
+      doc.setDrawColor(ORANGE[0],ORANGE[1],ORANGE[2]); doc.setLineWidth(0.8); doc.line(M,12+lh+4,W-M,12+lh+4);
+      y=12+lh+11;
+    } else {
+      doc.addImage(IMG.logo,'PNG',M,8,20,20*lp.height/lp.width);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(GREY[0],GREY[1],GREY[2]);
+      doc.text('Configuration '+S.ref,W-M,12,{align:'right'});
+      y=24;
+    }
+  }
+  function ensure(h){ if(y+h>H-20){ doc.addPage(); pageNo++; pageHeader(false); } }
+  function h2(t){ ensure(16); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(BLUE[0],BLUE[1],BLUE[2]); doc.text(T(t),M,y); doc.setDrawColor(ORANGE[0],ORANGE[1],ORANGE[2]); doc.setLineWidth(0.7); doc.line(M,y+1.6,M+11,y+1.6); y+=7; }
+  function kv(list,lw2){
+    lw2=lw2||52;
+    list.forEach(function(r,i){
+      doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      var lines=doc.splitTextToSize(T(r[1]),CW-lw2-4), ll=doc.splitTextToSize(T(r[0]),lw2-4);
+      var h=Math.max(6.6,Math.max(lines.length,ll.length)*4.5+2.6); ensure(h);
+      if(i%2===0){ doc.setFillColor(LIGHT[0],LIGHT[1],LIGHT[2]); doc.rect(M,y,CW,h,'F'); }
+      doc.setFont('helvetica','bold'); doc.setTextColor(60,60,60); doc.text(ll,M+2,y+4.5);
+      doc.setFont('helvetica','normal'); doc.setTextColor(TXT[0],TXT[1],TXT[2]); doc.text(lines,M+lw2,y+4.5);
+      y+=h;
+    });
+    y+=7;
+  }
+  function para(t,size,color,gap){
+    doc.setFont('helvetica','normal'); doc.setFontSize(size||9.5); doc.setTextColor.apply(doc,color||TXT);
+    var lines=doc.splitTextToSize(T(t),CW); lines.forEach(function(l){ ensure(5); doc.text(l,M,y); y+=(size||9.5)*0.45; }); y+=gap===undefined?3:gap;
+  }
+  function bullets(list){
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(TXT[0],TXT[1],TXT[2]);
+    list.forEach(function(t){ var lines=doc.splitTextToSize(T(t),CW-6); ensure(lines.length*4.6+1.5); doc.setFillColor(ORANGE[0],ORANGE[1],ORANGE[2]); doc.circle(M+1.4,y-1.1,0.8,'F'); doc.text(lines,M+5,y); y+=lines.length*4.6+1.6; });
+    y+=3;
+  }
+
+  pageHeader(true);
+  /* product block */
+  var key=photoKey()||'t4', ip=doc.getImageProperties(IMG[key]), ph=42, pw=ph*ip.width/ip.height;
+  doc.setFillColor(LIGHT[0],LIGHT[1],LIGHT[2]); doc.rect(M,y,CW,ph+6,'F');
+  doc.addImage(IMG[key],'JPEG',M+4,y+3,pw,ph);
+  var tx=M+pw+12; doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(TXT[0],TXT[1],TXT[2]);
+  var tl=doc.splitTextToSize(T('Ashcroft '+modelName()),CW-pw-16); doc.text(tl,tx,y+9);
+  var yy=y+9+tl.length*5.6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(GREY[0],GREY[1],GREY[2]);
+  var subs=[]; if(S.mount) subs.push(S.mount==='direct'?'Direct mount':'Remote mount'); var cr=curRange(); if(cr&&S.range!==null) subs.push(rangeLabel(cr)); if(S.poles) subs.push(S.poles==='dual'?'DPDT (2 x SPDT)':'SPDT');
+  doc.text(doc.splitTextToSize(T(subs.join(' - ')),CW-pw-16),tx,yy); yy+=9;
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(BLUE[0],BLUE[1],BLUE[2]); doc.text('Indicative ordering code parts',tx,yy); yy+=4.6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.8); doc.setTextColor(TXT[0],TXT[1],TXT[2]);
+  codeParts().forEach(function(p,i){ doc.text(T(p[0]+': '+p[1]),tx+(i%2)*46,yy+Math.floor(i/2)*4.4); });
+  doc.setFont('helvetica','italic'); doc.setFontSize(7); doc.setTextColor(GREY[0],GREY[1],GREY[2]); doc.text(T('Photo: '+photoCaption()),tx,y+ph+4.4,{maxWidth:CW-pw-16});
+  y+=ph+12;
+
+  h2('Your selections');
+  var R=rows().map(function(r){return [r.label,r.value];}); R.push(['Quantity',String(S.qty)]);
+  kv(R);
+
+  var pts=pointsList();
+  h2('Points we will check with you');
+  if(pts.length) bullets(pts); else para('No open points. We will still confirm the final specification in the quotation.');
+
+  h2('Delivery and installation notes');
+  var inst=[];
+  inst.push('Delivery: lead time and delivery terms are stated in the quotation. No prices are shown in this document.');
+  inst.push(S.mount==='remote'?'Remote mount: capillary lengths from 5 to 25 ft (5 ft steps). The 1/2 NPT male bushing (option BX) seals the capillary to the thermowell.':'Direct mount: 1/2 NPT male process connection. Stem lengths from 2 3/4" to 24".');
+  inst.push('Electrical termination: 3/4 NPT female conduit connection. Thermowells are ordered separately.');
+  if(isT7()) inst.push('T7 hazardous-area use: the listed approvals apply for ambient temperatures Ta = -20 C to 60 C.');
+  bullets(inst);
+
+  h2('Technical data (Ashcroft T4/T7 data sheet)');
+  var tech=[
+    ['Set repeatability (accuracy)','+/-1% of span'],
+    ['Switch type','SPDT or 2 SPDT acting as DPDT'],
+    ['Setpoint','Single setpoint, factory set or field adjustable (0-100% of range)'],
+    ['Deadband','Fixed or limited adjustable deadband'],
+    ['Enclosure rating', isT7()?'T7: NEMA 7 & 9, IP66 (explosion-proof, NEMA 3, 4, 7 & 9)':'T4: NEMA 4X, IP66 (watertight, NEMA 3, 4, 4X, 13)'],
+    ['Enclosure material', isT7()?'Epoxy coated aluminum, 316 SS (optional)':'Epoxy coated aluminum'],
+    ['Pressure connection','Direct mount: 1/2 NPT male. Remote mount: n/a (optional 1/2 NPT male bushing, XBX)'],
+    ['Electrical termination','3/4 NPT female'],
+    ['Direct mount','Stem lengths from 2 3/4" to 24"'],
+    ['Remote mount','Capillary lengths from 5 to 25 ft (5 ft increments)'],
+    ['Wetted components', S.mount==='remote'?'Bulb, capillary: 316 SS. Spiral armor: 302 SS':(S.mount==='direct'?'1/2 NPT and bulb: 316 SS':'Direct: 1/2 NPT and bulb 316 SS. Remote: bulb, capillary 316 SS; spiral armor 302 SS')],
+    ['Approvals', isT7()?'UL, CSA, ATEX, IECEx, CE, UKCA. Class I Div 1 Groups B, C, D; Class II Div 1 Groups E, F, G. II 2GD Ex d IIC T6 Gb, Ex tb IIIC T85 C Db, Ta = -20 C to 60 C':'UL, CSA, CE / UKCA']
+  ];
+  if(cr){ tech.push(['Selected range','Range '+rangeLabel(cr)+'. Maximum temperature '+cr.max+' F.']); }
+  var db=deadband(effCode()); if(db) tech.push(['Approx. deadband (range table)',fmtDeltaF(db[0],db[1])+(DU[effCode()]?' (dual elements: single value x 1.6)':'')]);
+  tech.push(['Functional safety','SIL 3 capable']);
+  kv(tech,58);
+
+  h2('Your notes');
+  para(S.notes?S.notes:'(none)');
+
+  ensure(34);
+  doc.setDrawColor(200,200,200); doc.setLineWidth(0.3); doc.line(M,y,W-M,y); y+=5;
+  para('This document is a non-binding configuration summary and request basis. It is not an offer or an order confirmation. The final specification, ordering code, price, availability and lead time are confirmed by Ashcroft Inc. in the quotation. Specifications are subject to change without notice. Ashcroft and Trust the Shield are trademarks of Ashcroft Inc. Data and photos: Ashcroft Inc. ('+SETTINGS.DATASHEET_REV+').',8,GREY);
+
+  var n=doc.getNumberOfPages();
+  for(var p=1;p<=n;p++){
+    doc.setPage(p);
+    doc.setDrawColor(BLUE[0],BLUE[1],BLUE[2]); doc.setLineWidth(0.4); doc.line(M,H-15,W-M,H-15);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(GREY[0],GREY[1],GREY[2]);
+    doc.text(T(SETTINGS.COMPANY+', '+SETTINGS.ADDRESS+'  |  '+SETTINGS.WEBSITE+'  |  '+SETTINGS.PHONE),M,H-10);
+    doc.text('Page '+p+' of '+n,W-M,H-10,{align:'right'});
+  }
+  return doc;
+}
+function pdfName(){ return 'Ashcroft-'+(S.enclosure||'T4-T7')+'-temperature-switch-'+S.ref+'.pdf'; }
+function downloadPdf(){
+  try{ var doc=buildPdf(); doc.save(pdfName()); toast('PDF downloaded.'); return doc; }
+  catch(err){ console.error(err); toast('Sorry, the PDF could not be created.'); }
+}
+
+/* ------------------------- quotation modal ------------------------- */
+var lastFocus=null, F={name:'',company:'',email:'',phone:'',place:'',message:''};
+function openQuote(){
+  lastFocus=document.activeElement;
+  var d=$('#dialog');
+  function fld(id,label,type,req,extra){ var v=F[id]; return '<div class="field" id="f-'+id+'"><label for="'+id+'">'+label+(req?' <span aria-hidden="true">*</span>':'')+'</label>'+(type==='textarea'?'<textarea id="'+id+'" name="'+id+'" data-q="'+id+'">'+esc(v)+'</textarea>':'<input id="'+id+'" name="'+id+'" type="'+type+'" data-q="'+id+'" value="'+esc(v)+'"'+(extra||'')+(req?' aria-required="true"':'')+'>')+'<div class="errmsg" id="e-'+id+'" hidden></div></div>'; }
+  d.innerHTML='<button type="button" class="x" id="mClose" aria-label="Close">×</button><h2 id="mTitle">Get a quotation</h2><p class="lead" style="margin-bottom:14px">Tell us who you are. We will open an email with your whole configuration ready to send.</p><form id="qForm" novalidate>'+
+    fld('name','Your name','text',true,' autocomplete="name"')+fld('company','Company','text',true,' autocomplete="organization"')+fld('email','Email','email',true,' autocomplete="email" inputmode="email"')+fld('phone','Phone (optional)','tel',false,' autocomplete="tel"')+fld('place','Delivery place (optional)','text',false,' autocomplete="off"')+fld('message','Message (optional)','textarea',false)+
+    '<div class="btnrow"><button type="submit" class="btn btn-accent" style="font-size:17px">Send request</button><button type="button" class="btn btn-secondary" id="mCancel">Cancel</button></div></form>';
+  var m=$('#modal'); m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
+  setTimeout(function(){ var n=$('#name'); if(n) n.focus(); },30);
+}
+function closeQuote(){
+  var m=$('#modal'); m.classList.remove('open'); m.setAttribute('aria-hidden','true'); document.body.style.overflow='';
+  if(lastFocus&&lastFocus.focus) lastFocus.focus();
+}
+function validateForm(){
+  var ok=true, first=null;
+  function err(id,msg){ var e=$('#e-'+id), f=$('#f-'+id); if(msg){ e.textContent=msg; e.hidden=false; f.classList.add('err'); $('#'+id).setAttribute('aria-invalid','true'); $('#'+id).setAttribute('aria-describedby','e-'+id); ok=false; if(!first) first=id; } else { e.hidden=true; f.classList.remove('err'); $('#'+id).removeAttribute('aria-invalid'); } }
+  err('name', F.name.trim()?'':'Please enter your name.');
+  err('company', F.company.trim()?'':'Please enter your company.');
+  err('email', !F.email.trim()?'Please enter your email address.':(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(F.email.trim())?'':'Please enter a valid email address, like name@company.com.'));
+  if(first) $('#'+first).focus();
+  return ok;
+}
+function showConfirm(mode,err){
+  var f={name:F.name.trim(),company:F.company.trim(),email:F.email.trim(),phone:F.phone.trim(),place:F.place.trim(),message:F.message.trim()};
+  var text=requestFull(f);
+  $('#dialog').innerHTML='<button type="button" class="x" id="mClose" aria-label="Close">×</button><h2 id="mTitle" tabindex="-1">'+(mode==='sent'?'Request sent':'Your email is ready')+'</h2>'+
+    '<p>'+(mode==='sent'?'Thank you. Your configuration was sent and we will come back to you with a quotation.':'Your email program should now open with the request filled in. Please <strong>attach the PDF</strong> and press send.')+'</p>'+
+    (err?'<div class="notice">'+esc(err)+'</div>':'')+
+    '<p class="small">If your email program cut the text short, use "Copy request text" below.</p><p class="small">Recipient: '+esc(SETTINGS.QUOTE_TO)+' &middot; Copy: '+esc(SETTINGS.QUOTE_CC)+'<br>Subject: '+esc(subjectLine())+'</p>'+
+    '<div class="btnrow"><button type="button" class="btn btn-primary" id="mPdf">Download PDF to attach</button><button type="button" class="btn btn-secondary" id="mCopy">Copy request text</button></div>'+
+    (mode==='mailto'?'<div class="btnrow"><button type="button" class="btn btn-secondary" id="mAgain">Open the email again</button></div>':'')+
+    '<div class="btnrow"><button type="button" class="btn btn-secondary" id="mDone">Close</button></div>'+
+    '<label class="small" for="mText" style="display:block;margin-top:14px">Request text (for webmail: paste it into a new message)</label><textarea id="mText" class="copybox" readonly>'+esc(text)+'</textarea>';
+  var h=$('#mTitle'); if(h) h.focus();
+}
+function copyText(txt){
+  function fallback(){ var ta=$('#mText'); if(ta){ ta.focus(); ta.select(); try{ document.execCommand('copy'); toast('Request text copied.'); }catch(e){ toast('Press Ctrl+C to copy the selected text.'); } } }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){toast('Request text copied.');},fallback); } else fallback();
+}
+document.addEventListener('input',function(e){ var q=e.target.getAttribute&&e.target.getAttribute('data-q'); if(q) F[q]=e.target.value; });
+document.addEventListener('submit',function(e){
+  if(e.target.id!=='qForm') return; e.preventDefault();
+  if(!validateForm()) return;
+  var f={name:F.name.trim(),company:F.company.trim(),email:F.email.trim(),phone:F.phone.trim(),place:F.place.trim(),message:F.message.trim()};
+  if(SETTINGS.QUOTE_ENDPOINT){
+    var payload={to:SETTINGS.QUOTE_TO,cc:SETTINGS.QUOTE_CC,subject:subjectLine(),reference:S.ref,customer:f,configuration:configLines(),pointsToCheck:pointsList(),notes:S.notes,quantity:S.qty,text:requestBody(f)};
+    fetch(SETTINGS.QUOTE_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); showConfirm('sent'); })
+      .catch(function(){ showConfirm('mailto','The online form could not be reached, so we prepared an email instead.'); openMail(f); });
+  } else { showConfirm('mailto'); openMail(f); }
+});
+function openMail(f){ var a=document.createElement('a'); a.href=window.__lastMailto=buildMailto(f); a.style.display='none'; document.body.appendChild(a); a.click(); setTimeout(function(){document.body.removeChild(a);},500); }
+document.addEventListener('click',function(e){
+  var id=e.target.id; if(!id) return;
+  if(id==='mClose'||id==='mCancel'||id==='mDone') closeQuote();
+  else if(id==='mPdf') downloadPdf();
+  else if(id==='mCopy'){ var ta=$('#mText'); copyText(ta?ta.value:''); }
+  else if(id==='mAgain'){ openMail({name:F.name.trim(),company:F.company.trim(),email:F.email.trim(),phone:F.phone.trim(),place:F.place.trim(),message:F.message.trim()}); }
+  else if(id==='modal') closeQuote();
+});
+document.addEventListener('keydown',function(e){
+  var m=$('#modal'); if(!m.classList.contains('open')) return;
+  if(e.key==='Escape'){ e.preventDefault(); closeQuote(); }
+  else if(e.key==='Tab'){ var f=$$('button:not([disabled]),input,textarea,a[href],[tabindex]:not([tabindex="-1"])',$('#dialog')).filter(function(x){return x.offsetParent!==null;}); if(!f.length) return; var a=f[0],b=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===a){ e.preventDefault(); b.focus(); } else if(!e.shiftKey&&document.activeElement===b){ e.preventDefault(); a.focus(); } }
+});
+
+/* ------------------------- go ------------------------- */
+constrain(); renderPanel();
+window.__cfg={S:S,SETTINGS:SETTINGS,go:go,rows:rows,pointsList:pointsList,buildMailto:buildMailto,requestFull:requestFull,requestBody:requestBody,subjectLine:subjectLine,buildPdf:buildPdf,pdfName:pdfName,missing:missing,valid:valid,recommended:recommended,evaluate:evaluate,codeParts:codeParts,deadband:deadband,effCode:effCode,F:F,openQuote:openQuote};
+})();
+</script>
+</body>
+</html>
